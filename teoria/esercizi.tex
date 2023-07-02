@@ -1,0 +1,883 @@
+\documentclass[a4paper]{letter}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage[acronym]{glossaries}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage[hidelinks]{hyperref}
+
+% questi sono per i simboli e font per le formule
+\usepackage{stmaryrd}
+\usepackage{mathtools}
+
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{mathrsfs}
+
+% simboli
+\usepackage{textcomp}
+\usepackage{upgreek}
+\usepackage{tipa}
+% \usepackage{fourier}
+
+% per gli alberi di derivazione
+\usepackage{ebproof}
+\usepackage{pdflscape}
+
+\newcommand{\defas}[0]{\stackrel{\text{def}}{=}}
+
+\begin{document}
+
+\textbf{Esercizio 2 p. 24}
+
+Definire la funzione $append$, che concatena due liste, in modo tale che:
+
+\begin{itemize}
+    \item $append(x, y) \in List(A) [x \in List(A),\,y \in List(A)]$;
+    \item $append(x, \text{nil}) = x \in List(A) [x \in List(A)]$;
+    \item $append(x, cons(y, a)) = cons(append(x, y), a) \in List(A) [x \in List(A),\,y \in List(A)]$.
+\end{itemize}
+
+Definizione:
+\begin{quote}
+    $append(x, y) \defas \text{El}_{List}(y, x, (y', a, acc).cons(acc, a))$
+\end{quote}
+
+Esempi:
+\begin{flalign*}
+    & append(cons(cons(\text{nil}, 1), 2), \text{nil}) = & \\
+    & \qquad = \text{El}_{List}(\text{nil}, cons(cons(\text{nil}, 1), 2), (y', a, acc).cons(acc, a)) = & \\
+    & \qquad = cons(cons(\text{nil}, 1), 2) &
+\end{flalign*}
+
+Usiamo la notazione $\{n_1,n_2,\dots,n_k\}$ per le liste per facilitare la lettura.
+
+% \begin{flalign*}
+%     & append(cons(cons(\text{nil}, 1), 2), cons(cons(\text{nil}, 3), 4)) = & \\
+%     & \qquad = \text{El}_{List}(cons(cons(\text{nil}, 3), 4), cons(cons(\text{nil}, 1), 2), (y', a, acc).cons(acc, a)) = & \\
+%     & \qquad = cons(\text{El}_{List}(cons(\text{nil}, 3), cons(cons(\text{nil}, 1), 2), (y', a, acc).cons(acc, a)), 4) = & \\
+%     & \qquad = cons(cons(\text{El}_{List}(\text{nil}, cons(cons(\text{nil}, 1), 2), (y', a, acc).cons(acc, a)), 3), 4) = & \\
+%     & \qquad = cons(cons(cons(cons(\text{nil}, 1), 2), 3), 4)&
+% \end{flalign*}
+
+\begin{flalign*}
+    & append(\{1,2\}, \{3,4\}) = & \\
+    & \qquad = \text{El}_{List}(\{3,4\}, \{1,2\}, (y', a, acc).cons(acc, a)) = & \\
+    & \qquad = cons(\text{El}_{List}(\{ 3 \}, \{1,2\}, (y', a, acc).cons(acc, a)), 4) = & \\
+    & \qquad = cons(cons(\text{El}_{List}(\text{nil}, \{1,2\}, (y', a, acc).cons(acc, a)), 3), 4) = & \\
+    & \qquad = cons(cons(\{1,2\}, 3), 4) \equiv \{1, 2, 3, 4\} &
+\end{flalign*}
+
+\textbf{Esercizio 3 p. 24}
+
+Specificare il tipo e definire le seguenti operazioni:
+\begin{itemize}
+    \item $back$, che restituisce la lista meno l'ultimo elemento;
+    \item $front$, che restituisce la lista meno il primo elemento;
+    \item $last$, che restituisce l'ultimo elemento della lista;
+    \item $first$, che restituisce il primo elemento della lista.
+\end{itemize}
+
+Siccome si tratta di funzioni che restituiscono un risultato solo se la lista è non vuota, allora definiamo un tipo opzionale $Opt(O) \defas O + \text{N}_1$, con cui modellare l'assenza o la presenza di un risultato:
+\begin{itemize}
+    \item $inl(o) \in O + \text{N}_1\,\,[a \in O]$ modella la presenza di un risultato ($o$);
+    \item $inr(*) \in O + \text{N}_1\,\,[]$ modella l'assenza di un risultato.
+\end{itemize}
+
+Funzione $back$:
+\begin{itemize}
+    \item $back(x) \in List(A) + N_1\,\,[x \in List(A)]$;
+    \item $back(nil) = inr(*) \in List(A) + N_1\,\,[]$;
+    \item $back(cons(s, a)) = s \in List(A) + N_1\,\,[s \in List(A), a \in A]$.
+\end{itemize}
+
+Definizione:
+\begin{quote}
+    $back(x) \defas \text{El}_{List}(s, inr(*), (s, a, c).inl(\text{El}_{List}(s, \text{nil}, (s', a', acc).cons(acc, a'))))$
+\end{quote}
+
+Esempi:
+
+\begin{flalign*}
+    & back(cons(\text{nil}, 2)) = & \\
+    & \qquad = \text{El}_{List}(cons(\text{nil}, 2), inr(*), (s, a, c).inl(\text{El}_{List}(s, \text{nil}, (s', a', acc).cons(acc, a')))) & \\
+    & \qquad = inl(\text{El}_{List}(\text{nil}, \text{nil}, (s', a', acc).cons(acc, a'))) = & \\
+    & \qquad = inl(\text{nil}) &
+\end{flalign*}
+
+
+\begin{flalign*}
+    & back(\{1, 2\}) = & \\
+    & \qquad = \text{El}_{List}(\{1, 2\}, inr(*), (s, a, c).inl(\text{El}_{List}(s, \text{nil}, (s', a', acc).cons(acc, a')))) & \\
+    & \qquad = inl(\text{El}_{List}(\{ 1 \}, \text{nil}, (s', a', acc).cons(acc, a'))) = & \\
+    & \qquad = inl(cons(\text{El}_{List}(\text{nil}, \text{nil}, (s', a', acc).cons(acc, a')), 1)) = & \\
+    & \qquad = inl(cons(\text{nil}, 1)) = inl(\{ 1 \} )&
+\end{flalign*}
+
+
+Funzione $front$:
+\begin{itemize}
+    \item $front(x) \in List(A) + \text{N}_1\,\,[x \in List(A)]$;
+    \item $front(nil) = inr(*) \in List(A) + \text{N}_1\,\,[]$;
+    \item $front(cons(s, a)) = inl(\text{El}_+(front(s), (s').cons(front(s'), a), (u).nil)) \in List(A) + \text{N}_1\,\,[s \in List(A), a \in A]$
+\end{itemize}
+
+Definizione:
+\begin{quote}
+    $front(x) = \text{El}_{List}(x, inr(*), (s, a, c).inl(\text{El}_{List}(cons(s, a), \text{nil}, e)))$
+
+    dove $e(s', a', acc) = \text{El}_{List}(s', \text{nil}, (x, y, z).cons(acc, a'))$
+\end{quote}
+
+
+Esempi:
+\begin{flalign*}
+    & front(cons(\text{nil}, 2)) = & \\
+    & \qquad = \text{El}_{List}(cons(\text{nil}, 2), inr(*), (s, a, c).inl(\text{El}_{List}(cons(s, a), \text{nil}, e))) & \\
+    & \qquad = inl(\text{El}_{List}(cons(\text{nil}, 2), \text{nil}, e)) = & \\
+    & \qquad = inl(e(\text{nil}, 2, \text{El}_{List}(\text{nil}, \text{nil}, e))) = &\\
+    & \qquad = inl(e(\text{nil}, 2, \text{nil})) = & \\
+    & \qquad = inl(\text{El}_{List}(\text{nil}, \text{nil}, (x, y, z).cons(\text{nil}, 2))) = inl(\text{nil})&
+\end{flalign*}
+
+\begin{flalign*}
+    & front(\{ 1, 2 \}) = & \\
+    & \qquad = \text{El}_{List}(\{ 1, 2 \}, inr(*), (s, a, c).inl(\text{El}_{List}(cons(s, a), \text{nil}, e))) & \\
+    & \qquad = inl(\text{El}_{List}(\{ 1, 2 \}, \text{nil}, e)) = & \\
+    & \qquad = inl(e(\{ 1 \}, 2, \text{El}_{List}(\{ 1 \}, \text{nil}, e))) = &\\
+    & \qquad = inl(e(\{ 1 \}, 2, e(\text{nil}, 1, \text{El}_{List}(\text{nil}, \text{nil}, e)))) = & \\
+    & \qquad = inl(e(\{ 1 \}, 2, e(\text{nil}, 1, \text{nil}))) = & \\
+    & \qquad = inl(e(\{ 1 \}, 2, \text{El}_{List}(\text{nil}, \text{nil}, (x, y, z).cons(\text{nil}, 1)))) = & \\
+    & \qquad = inl(e(\{ 1 \}, 2, \text{nil})) = & \\
+    & \qquad = inl(\text{El}_{List}(\{ 1 \}, \text{nil}, (x, y, z).cons(\text{nil}, 2))) = & \\
+    & \qquad = inl(cons(\text{nil}, 2)) = inl(\{ 2 \}) & 
+\end{flalign*}
+
+Funzione $last$:
+\begin{itemize}
+    \item $last(x) \in A + \text{N}_1\,\,[x \in List(A)]$;
+    \item $last(nil) = inr(*) \in A + \text{N}_1\,\,[]$;
+    \item $last(cons(s, a)) = inl(a) \in A + \text{N}_1\,\,[s \in List(A), a \in A]$.
+\end{itemize}
+
+Definizione:
+\begin{quote}
+    $last(x) = \text{El}_{List}(x, inr(*), (s', a', acc).inl(a))$
+\end{quote}
+
+Funzione $first$:
+\begin{itemize}
+    \item $first(x) \in A + \text{N}_1\,\,[x \in List(A)]$;
+    \item $first(nil) = inr(*) \in A + \text{N}_1\,\,[]$;
+    \item $first(cons(s, a)) = inl(\text{El}_+(first(s), (a').a', (u).a)) \in A + \text{N}_1\,\,$
+    
+    $[s \in List(A), a \in A]$
+\end{itemize}
+
+Definizione:
+\begin{quote}
+    $first(x) = \text{El}_{List}(x, inr(*), (s, a, acc).inl(\text{El}_{List}(s, a, e)))$
+
+    dove $e(s', a', acc) = \text{El}_{List}(s', a', (x, y, z).acc)$
+\end{quote}
+
+Esempi:
+\begin{flalign*}
+    & first(\{ 1 \}) = & \\
+    & \qquad = \text{El}_{List}(\{ 1 \}, inr(*), (s, a, acc).inl(\text{El}_{List}(s, a, e))) &\\
+    & \qquad = inl(\text{El}_{List}(\text{nil}, 1, e)) = inl(1) &
+\end{flalign*}
+
+\begin{flalign*}
+    & first(\{ 1, 2, 3 \}) = & \\
+    & \qquad = \text{El}_{List}(\{ 1, 2, 3 \}, inr(*), (s, a, acc).inl(\text{El}_{List}(s, a, e))) &\\
+    & \qquad = inl(\text{El}_{List}(\{ 1, 2 \}, 3, e)) = & \\
+    & \qquad = inl(e(\{ 1 \}, 2, \text{El}_{List}(\{ 1 \}, 3, e))) = & \\
+    & \qquad = inl(e(\{ 1 \}, 2, e(\text{nil}, 1, \text{El}_{List}(\text{nil}, 3, e)))) = & \\
+    & \qquad = inl(e(\{ 1 \}, 2, e(\text{nil}, 1, 3))) = & \\
+    & \qquad = inl(e(\{ 1 \}, 2, \text{El}_{List}(\text{nil}, 1, (x, y, z).3))) = & \\
+    & \qquad = inl(e(\{ 1 \}, 2, 1)) = & \\
+    & \qquad = inl(\text{El}_{List}(\{ 1 \}, 2, (x, y, z).1)) = inl(1) &
+\end{flalign*}
+
+\textbf{Esercizio 1 p. 27}
+Scrivere le regole del tipo $Bool$ che rappresenta valori booleani e provare che il $Bool$ è rappresentabile da $N_1 + N_1$.
+
+Formazione:
+\begin{flalign*}
+    \begin{prooftree}
+        \hypo{\Gamma\,\,cont}
+        \infer1[F-Bool]{\text{Bool}\,\,type\,\,[\Gamma]}
+    \end{prooftree}
+\end{flalign*}
+
+Sia $Bool \defas N_1 + N_1$. Allora la regola F-Bool è derivabile assumendo $\Gamma\,\,cont$:
+\begin{flalign*}
+    \begin{prooftree}
+        \hypo{\Gamma\,\,cont}
+        \infer1[F-S]{\text{N}_1\,\,type\,\,[\Gamma]}
+        \hypo{\Gamma\,\,cont}
+        \infer1[F-S]{\text{N}_1\,\,type\,\,[\Gamma]}
+        \infer2[F-+]{\text{N}_1 + \text{N}_1\,\,type\,\,[\Gamma]}
+    \end{prooftree}
+\end{flalign*}
+
+Introduzione (\emph{false}):
+\begin{flalign*}
+    \begin{prooftree}
+        \hypo{\Gamma\,\,cont}
+        \infer1[I-0-Bool]{0 \in \text{Bool}\,\,[\Gamma]}
+    \end{prooftree}
+\end{flalign*}
+
+Sia $Bool \defas N_1 + N_1$ e $0 \defas inl(*)$. Allora la regola I-0-Bool è derivabile assumendo $\Gamma\,\,cont$:
+
+\begin{flalign*}
+    \begin{prooftree}
+        \hypo{\Gamma\,\,cont}
+        \infer1[I-S]{* \in \text{N}_1\,\,[\Gamma]}
+        \hypo{\Gamma\,\,cont}
+        \infer1[F-S]{\text{N}_1\,\,type\,\,[\Gamma]}
+        \hypo{\Gamma\,\,cont}
+        \infer1[F-S]{\text{N}_1\,\,type\,\,[\Gamma]}
+        \infer3[I-1-+]{inl(*) \in \text{N}_1 + \text{N}_1\,\,[\Gamma]}
+    \end{prooftree}
+\end{flalign*}
+
+
+Introduzione (\emph{true}):
+
+\begin{flalign*}
+    \begin{prooftree}
+        \hypo{\Gamma\,\,cont}
+        \infer1[I-1-Bool]{1 \in \text{Bool}\,\,[\Gamma]}
+    \end{prooftree}
+\end{flalign*}
+
+Sia $Bool \defas N_1 + N_1$ e $1 \defas inr(*)$. Allora la regola I-1-Bool è derivabile assumendo $\Gamma\,\,cont$:
+
+\begin{flalign*}
+    \begin{prooftree}
+        \hypo{\Gamma\,\,cont}
+        \infer1[I-S]{* \in \text{N}_1\,\,[\Gamma]}
+        \hypo{\Gamma\,\,cont}
+        \infer1[F-S]{\text{N}_1\,\,type\,\,[\Gamma]}
+        \hypo{\Gamma\,\,cont}
+        \infer1[F-S]{\text{N}_1\,\,type\,\,[\Gamma]}
+        \infer3[I-2-+]{inr(*) \in \text{N}_1 + \text{N}_1\,\,[\Gamma]}
+    \end{prooftree}
+\end{flalign*}
+
+Eliminazione:
+\begin{flalign*}
+    \begin{prooftree}
+        \hypo{M(z) type\,\,[\Gamma, z \in Bool]}
+        \hypo{b \in Bool\,\,[\Gamma]}
+        \hypo{m_0 \in M(0)\,\,[\Gamma]}
+        \hypo{m_1 \in M(1)\,\,[\Gamma]}
+        \infer4[E-Bool]{\text{El}_{Bool}(b, m_0, m_1) \in M(b) \,\,[\Gamma]}
+    \end{prooftree}
+\end{flalign*}
+
+Sia $Bool \defas N_1 + N_1$ e $\text{El}_{Bool}(b, m_0, m_1) \defas \text{El}_{+}(b, e_0, e_1)$, con $e_0(*) \defas m_0$, $e_1(*) \defas m_1$. Allora la regola E-Bool è derivabile:
+\begin{itemize} 
+    \item da $M(z) type\,\,[\Gamma, z \in Bool]$ assumiamo $M(z) type\,\,[\Gamma, z \in \text{N}_1 + \text{N}_1]$
+    \item da $b \in Bool\,\,[\Gamma]$ assumiamo $b \in \text{N}_1 + \text{N}_1\,\,[\Gamma]$
+    \item da $m_0 \in M(0)\,\,[\Gamma]$ assumiamo $e_0(*) \in M(inl(*))\,\,[\Gamma]$
+    \item da $m_1 \in M(1)\,\,[\Gamma]$ assumiamo $e_1(*) \in M(inr(*))\,\,[\Gamma]$
+\end{itemize}
+
+\scalebox{0.6}{
+\begin{prooftree}
+    \hypo{M(z) type\,\,[\Gamma, z \in \text{N}_1 + \text{N}_1]}
+    \hypo{b \in \text{N}_1 + \text{N}_1\,\,[\Gamma]}
+    \hypo{e_0(x_0) \in M(inl(x_0))\,\,[\Gamma, x_0 \in \text{N}_1]}
+    \hypo{e_1(x_1) \in M(inl(x_1))\,\,[\Gamma, x_1 \in \text{N}_1]}
+    \infer4[E-+]{\text{El}_{+}(b, e_0, e_1) \in M(b) \,\,[\Gamma]}
+\end{prooftree}}
+
+Che coincide con le premesse, siccome $x \in \text{N}_1 \implies x = *$.
+
+Conversione (false):
+
+\begin{prooftree}
+    \hypo{M(z) type\,\,[\Gamma, z \in Bool]}
+    \hypo{m_0 \in M(0)\,\,[\Gamma]}
+    \hypo{m_1 \in M(1)\,\,[\Gamma]}
+    \infer3[C$_1$-Bool]{\text{El}_{Bool}(0, m_0, m_1) = m_0 \in M(0) \,\,[\Gamma]}
+\end{prooftree}
+
+Sia $Bool \defas N_1 + N_1$ e $\text{El}_{Bool}(b, m_0, m_1) \defas \text{El}_{+}(b, e_0, e_1)$, con $e_0(*) \defas m_0$, $e_1(*) \defas m_1$. Allora la regola C-0-Bool è derivabile:
+\begin{itemize} 
+    \item da $M(z) type\,\,[\Gamma, z \in Bool]$ assumiamo $M(z) type\,\,[\Gamma, z \in \text{N}_1 + \text{N}_1]$
+    \item da $m_0 \in M(0)\,\,[\Gamma]$ assumiamo $e_0(*) \in M(inl(*))\,\,[\Gamma]$
+    \item da $m_1 \in M(1)\,\,[\Gamma]$ assumiamo $e_1(*) \in M(inr(*))\,\,[\Gamma]$
+\end{itemize}
+
+\scalebox{0.8}{
+\begin{prooftree}
+    \hypo{M(z) type\,\,[\Gamma, z \in N_1 + N_1]}
+    \hypo{\Gamma\,\,cont}
+    \infer1[I-S]{* \in \text{N}_1\,\,[\Gamma]}
+    \hypo{e_0(*) \in M(inl(*))\,\,[\Gamma]}
+    \hypo{e_1(*) \in M(inr(*))\,\,[\Gamma]}
+    \infer4[C$_1$-+]{\text{El}_{+}(inl(*), e_0, e_1) = e_0(*) \in M(inl(*)) \,\,[\Gamma]}
+\end{prooftree}
+}
+
+Conversione (true):
+
+\begin{prooftree}
+    \hypo{M(z) type\,\,[\Gamma, z \in Bool]}
+    \hypo{m_0 \in M(0)\,\,[\Gamma]}
+    \hypo{m_1 \in M(1)\,\,[\Gamma]}
+    \infer3[C$_2$-Bool]{\text{El}_{Bool}(1, m_0, m_1) = m_1 \in M(1) \,\,[\Gamma]}
+\end{prooftree}
+
+Sia $Bool \defas N_1 + N_1$ e $\text{El}_{Bool}(b, m_0, m_1) \defas \text{El}_{+}(b, e_0, e_1)$, con $e_0(*) \defas m_0$, $e_1(*) \defas m_1$. Allora la regola C-1-Bool è derivabile:
+\begin{itemize} 
+    \item da $M(z) type\,\,[\Gamma, z \in Bool]$ assumiamo $M(z) type\,\,[\Gamma, z \in \text{N}_1 + \text{N}_1]$
+    \item da $m_0 \in M(0)\,\,[\Gamma]$ assumiamo $e_0(*) \in M(inl(*))\,\,[\Gamma]$
+    \item da $m_1 \in M(1)\,\,[\Gamma]$ assumiamo $e_1(*) \in M(inr(*))\,\,[\Gamma]$
+\end{itemize}
+
+\scalebox{0.8}{
+\begin{prooftree}
+    \hypo{M(z) type\,\,[\Gamma, z \in N_1 + N_1]}
+    \hypo{\Gamma\,\,cont}
+    \infer1[I-S]{* \in \text{N}_1\,\,[\Gamma]}
+    \hypo{e_0(*) \in M(inl(*))\,\,[\Gamma]}
+    \hypo{e_1(*) \in M(inr(*))\,\,[\Gamma]}
+    \infer4[C$_2$-+]{\text{El}_{+}(inr(*), e_0, e_1) = e_1(*) \in M(inr(*)) \,\,[\Gamma]}
+\end{prooftree}
+}
+
+\textbf{Esercizio 4 p. 53}
+
+Supponendo il tipo $Bool \defas \text{N}_1 + \text{N}_1$, con $0 \defas inl(*)$ e $1 \defas inr(*)$ si vuole mostrare che esiste un proof-term $q$ tale che:
+
+\[ q \in \forall_{x \in Bool}\,\,((x = 0) \lor (x = 1)) \]
+
+Sia $\varphi = \forall_{x \in Bool}\,\,((x = 0) \lor (x = 1))$. Allora $q \in \varphi $ sse esiste un $t$ tale che $ t \in (\varphi)^I$ sia derivabile nella teoria dei tipi.
+
+Il tipo è:
+
+\[ (\varphi)^I = \Pi_{x \in Bool}\,\,(\text{Id}(Bool, x, 0) + \text{Id}(Bool, x, 1)) \]
+
+Il termine è $\lambda x^{Bool}.\text{El}_{Bool}(x, inl(id(0)), inr(id(1)))$ (usiamo come regola di derivazione di El$_{Bool}$ quella dell'esercizio 1 di p. 27).
+
+\clearpage 
+\begin{landscape}
+    
+\scalebox{0.7}{
+\begin{prooftree}
+    \hypo{\text{Id}(Bool, z, 0) + \text{Id}(Bool, z, 1)\,\,type\,\,[z \in Bool,\,\,x \in Bool]}
+    \hypo{[]\,\,cont}
+    \infer1[F-Bool]{Bool\,\,type\,\,[]}
+    \infer1[var]{x \in Bool\,\,[x \in Bool]}
+    \hypo{inl(id(0)) \in \text{Id}(Bool, 0, 0) + \text{Id}(Bool, 0, 1)\,\,[x \in Bool]}
+    \hypo{inr(id(1)) \in \text{Id}(Bool, 1, 0) + \text{Id}(Bool, 1, 1)\,\,[x \in Bool]}
+    \infer4[E-Bool]{\text{El}_{Bool}(x, inl(id(0)), inr(id(1))) \in \text{Id}(Bool, x, 0) + \text{Id}(Bool, x, 1)\,\,[x \in Bool]}
+    \infer1[I-$\Pi$]{\lambda x^{Bool}.\text{El}_{Bool}(x, inl(id(0)), inr(id(1))) \in \Pi_{x \in Bool}\,\,(\text{Id}(Bool, x, 0) + \text{Id}(Bool, x, 1))\,\,[]}
+\end{prooftree}}
+
+Per semplicità di lettura la derivazione dell'albero segue spezzata.
+
+D'ora in poi la derivazione del giudizio $Bool\,\,type\,\,[z \in Bool,\,\,x \in Bool]$ e dei giudizi derivati nel seguente albero verranno omessi:
+\begin{prooftree}
+    \hypo{[]\,\,cont}
+    \infer1[F-Bool]{Bool\,\,type\,\,[]}
+    \infer1[F-c]{x \in Bool\,\,cont}
+    \infer1[F-Bool]{Bool\,\,type\,\,[x \in Bool]}
+    \infer1[F-c]{z \in Bool,\,\,x \in Bool\,\,cont}
+    \infer1[F-Bool]{Bool\,\,type\,\,[z \in Bool,\,\,x \in Bool]}
+\end{prooftree}
+
+Il giudizio $\text{Id}(Bool, z, 0) + \text{Id}(Bool, z, 1)\,\,type\,\,[z \in Bool,\,\,x \in Bool]$ è derivabile:
+
+\scalebox{0.7}{
+\begin{prooftree}
+    \hypo{[]\,\,cont}
+    \infer1[[...]]{Bool\,\,type\,\,[z \in Bool,\,\,x \in Bool]}
+    \hypo{[]\,\,cont}
+    \infer1[[...]]{Bool\,\,type\,\,[x \in Bool]}
+    \infer1[var]{z \in Bool\,\,[z \in Bool,\,\,x \in Bool]}
+    \hypo{[]\,\,cont}
+    \infer1[[...]]{z \in Bool,\,\,x \in Bool\,\,cont}
+    \infer1[I$_1$-Bool]{0 \in Bool\,\,[z \in Bool,\,\,x \in Bool]}
+    \infer3[F-Id]{\text{Id}(Bool, z, 0) type\,\,[z \in Bool,\,\,x \in Bool]}
+    \hypo{[]\,\,cont}
+    \infer1[[...]]{Bool\,\,type\,\,[z \in Bool,\,\,x \in Bool]}
+    \hypo{[]\,\,cont}
+    \infer1[[...]]{Bool\,\,type\,\,[x \in Bool]}
+    \infer1[var]{z \in Bool\,\,[z \in Bool,\,\,x \in Bool]}
+    \hypo{[]\,\,cont}
+    \infer1[[...]]{z \in Bool,\,\,x \in Bool\,\,cont}
+    \infer1[I$_2$-Bool]{1 \in Bool\,\,[z \in Bool,\,\,x \in Bool]}
+    \infer3[F-Id]{\text{Id}(Bool, z, 1) type\,\,[z \in Bool,\,\,x \in Bool]}
+    \infer2[F-+]{\text{Id}(Bool, z, 0) + \text{Id}(Bool, z, 1)\,\,type\,\,[z \in Bool,\,\,x \in Bool]}
+\end{prooftree}}
+
+Il giuduzio $inl(id(0)) \in \text{Id}(Bool, 0, 0) + \text{Id}(Bool, 0, 1)\,\,[x \in Bool]$ è derivabile:
+
+\scalebox{0.8}{
+\begin{prooftree}
+    \hypo{[]\,\,cont}
+    \infer1[I$_1$-Bool]{0 \in Bool\,\,[]}
+    \infer1[I-Id]{id(0) \in \text{Id}(Bool, 0, 0)\,\,[]}
+    \hypo{[]\,\,cont}
+    \infer1[F-Bool]{Bool\,\,type\,\,[]}
+    \hypo{[]\,\,cont}
+    \infer1[I$_1$-Bool]{0 \in Bool\,\,[]}
+    \hypo{[]\,\,cont}
+    \infer1[I$_2$-Bool]{0 \in Bool\,\,[]}
+    \infer3{\text{Id}(Bool, 0, 0)\,\,type\,\,[]}
+    \hypo{[]\,\,cont}
+    \infer1[F-Bool]{Bool\,\,type\,\,[]}
+    \hypo{[]\,\,cont}
+    \infer1[I$_1$-Bool]{0 \in Bool\,\,[]}
+    \hypo{[]\,\,cont}
+    \infer1[I$_2$-Bool]{1 \in Bool\,\,[]}
+    \infer3{\text{Id}(Bool, 0, 1)\,\,type\,\,[]}
+    \infer3[I$_1$-+]{inl(id(0)) \in \text{Id}(Bool, 0, 0) + \text{Id}(Bool, 0, 1)\,\,[]}
+    \hypo{[]\,\,cont}
+    \infer1[[...]]{x \in Bool\,\,cont}
+    \infer2[weak-te]{inl(id(0)) \in \text{Id}(Bool, 0, 0) + \text{Id}(Bool, 0, 1)\,\,[x \in Bool]}
+\end{prooftree}
+}
+
+Il giuduzio $inr(id(1)) \in \text{Id}(Bool, 1, 0) + \text{Id}(Bool, 1, 1)\,\,[x \in Bool]$ è derivabile:
+
+\scalebox{0.8}{
+\begin{prooftree}
+    \hypo{[]\,\,cont}
+    \infer1[I$_2$-Bool]{1 \in Bool\,\,[]}
+    \infer1[I-Id]{id(1) \in \text{Id}(Bool, 1, 1)\,\,[]}
+    \hypo{[]\,\,cont}
+    \infer1[F-Bool]{Bool\,\,type\,\,[]}
+    \hypo{[]\,\,cont}
+    \infer1[I$_2$-Bool]{1 \in Bool\,\,[]}
+    \hypo{[]\,\,cont}
+    \infer1[I$_1$-Bool]{0 \in Bool\,\,[]}
+    \infer3{\text{Id}(Bool, 1, 0)\,\,type\,\,[]}
+    \hypo{[]\,\,cont}
+    \infer1[F-Bool]{Bool\,\,type\,\,[]}
+    \hypo{[]\,\,cont}
+    \infer1[I$_1$-Bool]{1 \in Bool\,\,[]}
+    \hypo{[]\,\,cont}
+    \infer1[I$_2$-Bool]{1 \in Bool\,\,[]}
+    \infer3{\text{Id}(Bool, 1, 1)\,\,type\,\,[]}
+    \infer3[I$_1$-+]{inr(id(1)) \in \text{Id}(Bool, 1, 0) + \text{Id}(Bool, 1, 1)\,\,[]}
+    \hypo{[]\,\,cont}
+    \infer1[[...]]{x \in Bool\,\,cont}
+    \infer2[weak-te]{inr(id(1)) \in \text{Id}(Bool, 1, 0) + \text{Id}(Bool, 1, 1)\,\,[x \in Bool]}
+\end{prooftree}
+}
+
+Pertanto, siccome il giudizio $\lambda x^{Bool}.\text{El}_{Bool}(x, inl(id(0)), inr(id(1))) \in \Pi_{x \in Bool}\,\,(\text{Id}(Bool, x, 0) + \text{Id}(Bool, x, 1))\,\,[]$ è derivabile, e dunque il tipo è abitato, esiste un proof term $p \in \forall_{x \in Bool}\,\,((x = 0) \lor (x = 1))$.
+\end{landscape}
+
+\textbf{Esercizio 2 p. 53} 
+
+\begin{enumerate}
+    \item Dimostrare che N$_1 \rightarrow \text{N}_0$ e N$_0$ sono isomorfi.
+    \item Fornire la traduzione in logica proposizionale \emph{as-sets} secondo \\ Curry-Howard-Martin-Löf.
+\end{enumerate}
+
+\textbf{1.}
+N$_1 \rightarrow \text{N}_0$ e N$_0$ sono isomorfi sse esistono due termini $f(x)$ e $h(y)$ tali che:
+\begin{itemize}
+    \item $f(x) \in \text{N}_0\,\,[x \in \text{N}_1 \rightarrow \text{N}_0]$
+    \item $h(y) \in \text{N}_1 \rightarrow \text{N}_0\,\,[y \in \text{N}_0]$
+\end{itemize}
+siano derivabili nella teoria dei tipi; inoltre tali termini devono essere tali per cui esistano $\mathbf{pf_1}$ e $\mathbf{pf_2}$ per le proposizioni:
+\begin{itemize}
+    \item $\mathbf{pf_1} \in x = h(f(x))\,\,[x \in \text{N}_1 \rightarrow \text{N}_0]$;
+    \item $\mathbf{pf_2} \in y = f(h(y))\,\,[y \in \text{N}_0]$.
+\end{itemize}
+
+I termini sono:
+
+$f(x) = \text{Ap}(x, *)$
+\begin{quote}
+    \begin{prooftree}
+        \hypo{[]\,\,cont}
+        \infer1[F-$\rightarrow$]{\text{N}_1 \rightarrow \text{N}_0\,\,type\,\,[]}
+        \infer1[F-c]{x \in \text{N}_1 \rightarrow \text{N}_0\,\,cont}
+        \infer1[I-S]{* \in \text{N}_1\,\,[x \in \text{N}_1 \rightarrow \text{N}_0]}
+        \hypo{[]\,\,cont}
+        \infer1[F-$\rightarrow$]{\text{N}_1 \rightarrow \text{N}_0\,\,type\,\,[]}
+        \infer1[var]{x \in \text{N}_1 \rightarrow \text{N}_0\,\,[x \in \text{N}_1 \rightarrow \text{N}_0]}
+        \infer2[E-$P$]{\text{Ap}(x, *) \in \text{N}_0\,\,[x \in \text{N}_1 \rightarrow \text{N}_0]}
+    \end{prooftree}
+\end{quote}
+$h(y) = \lambda s^{\text{N}_1}.y$
+\begin{quote}
+    \begin{prooftree}
+        \hypo{[]\,\,cont}
+        \infer1[F-S]{\text{N}_1\,\,type\,\,[]}
+        \infer1[F-c]{s \in \text{N}_1\,\,cont}
+        \infer1[var]{y \in \text{N}_0\,\,[y \in \text{N}_0\,\,s \in \text{N}_1]}
+        \infer1[I-$\rightarrow$]{\lambda s^{\text{N}_1}.y \in \text{N}_1 \rightarrow \text{N}_0\,\,[y \in \text{N}_0]}
+    \end{prooftree}
+\end{quote}
+
+Pertanto siccome
+\begin{itemize}
+    \item $h(f(x)) = s^{\text{N}_1}.\text{Ap}(x, *)$;
+    \item $f(h(y)) = \text{Ap}(\lambda s^{\text{N}_1}.y, *)$.
+\end{itemize}
+
+la traduzione in teoria dei tipi delle proposizioni è:
+\begin{itemize}
+    \item $x = h(f(x))\,\,prop\,\,[x \in \text{N}_1 \rightarrow \text{N}_0] = \text{Id}(\text{N}_1 \rightarrow \text{N}_0, x, \lambda s^{\text{N}_1} . \text{Ap}(x, *))\,\,[x \in \text{N}_1 \rightarrow \text{N}_0]$;
+    \item $y = f(h(y))\,\,prop\,\,[y \in \text{N}_0] = \text{Id}(\text{N}_0, y, \text{Ap}(\lambda s^{\text{N}_1} . y, *))\,\,[y \in \text{N}_0]$.
+\end{itemize}
+
+\begin{landscape}
+
+I \emph{proof term} sono:
+
+$\mathbf{pf_1} = \text{El}_{\text{N}_0}(Ap(x, *))$
+
+\scalebox{0.8}{
+\begin{prooftree}
+    \hypo{[]\,\,cont}
+    \infer1[[...]]{\text{Ap}(x, *) \in \text{N}_0\,\,[x \in \text{N}_1 \rightarrow \text{N}_0]}
+    \hypo{[]\,\,cont}
+    \infer1[[...]]{\text{N}_1 \rightarrow \text{N}_0\,\,type\,\,[x \in \text{N}_1 \rightarrow \text{N}_0]}
+    \hypo{[]\,\,cont}
+    \infer1[[...]]{x \in \text{N}_1 \rightarrow \text{N}_0\,\,[x \in \text{N}_1 \rightarrow \text{N}_0]}
+    \hypo{[]\,\,cont}
+    \infer1[[...]]{\text{Ap}(x, *) \in \text{N}_0\,\,[x \in \text{N}_1 \rightarrow \text{N}_0,\,\,s \in \text{N}_1]}
+    \infer1[I-$\rightarrow$]{\lambda s^{\text{N}_1} . \text{Ap}(x, *) \in \text{N}_1 \rightarrow \text{N}_0\,\,[x \in \text{N}_1 \rightarrow \text{N}_0]}
+    \infer3[F-Id]{\text{Id}(\text{N}_1 \rightarrow \text{N}_0, x, \lambda s^{\text{N}_1} . \text{Ap}(x, *))\,\,type\,\,[x \in \text{N}_1 \rightarrow \text{N}_0]}
+    \hypo{[]\,\,cont}
+    \infer1[...]{x \in \text{N}_1 \rightarrow \text{N}_0,\,\,cont}
+    \infer2[weak-ty]{\text{Id}(\text{N}_1 \rightarrow \text{N}_0, x, \lambda s^{\text{N}_1} . \text{Ap}(x, *))\,\,type\,\,[x \in \text{N}_1 \rightarrow \text{N}_0,\,\,z \in \text{N}_0]}
+    \infer2[E-N$_0$]{\text{El}_{\text{N}_0}(Ap(x, *)) \in \text{Id}(\text{N}_1 \rightarrow \text{N}_0, x, \lambda s^{\text{N}_1} . \text{Ap}(x, *))\,\,[x \in \text{N}_1 \rightarrow \text{N}_0]}
+\end{prooftree}}
+
+$\mathbf{pf_2} = \text{El}_{\text{N}_0}(y)$
+
+\begin{prooftree}
+    \hypo{[]\,\,cont}
+    \infer1[[...]]{y \in \text{N}_0\,\,[y \in \text{N}_0]}
+    \hypo{[]\,\,cont}
+    \infer1[[...]]{\text{N}_0\,\,type\,\,[y \in \text{N}_0]}
+    \hypo{[]\,\,cont}
+    \infer1[[...]]{y \in \text{N}_0\,\,[y \in \text{N}_0]}
+    \hypo{[]\,\,cont}
+    \infer1[[...]]{* \in \text{N}_1\,\,[y \in \text{N}_0]}
+    \hypo{[]\,\,cont}
+    \infer1[[...]]{y \in \text{N}_0\,\,[y \in \text{N}_0]}
+    \infer1[I-$\rightarrow$]{\lambda s^{\text{N}_1} . y \in \text{N}_1 \rightarrow \text{N}_0\,\,[y \in \text{N}_0]}
+    \infer2[E-$\rightarrow$]{\text{Ap}(\lambda s^{\text{N}_1} . y, *) \in \text{N}_0\,\,[y \in \text{N}_0]}
+    \infer3[F-Id]{\text{Id}(\text{N}_0, y, \text{Ap}(\lambda s^{\text{N}_1} . y, *))\,\,type\,\,[y \in \text{N}_0]}
+    \hypo{[]\,\,cont}
+    \infer1[[...]]{y \in \text{N}_0,\,\,z\in \text{N}_0\,\,cont}
+    \infer2[weak-ty]{\text{Id}(\text{N}_0, y, \text{Ap}(\lambda s^{\text{N}_1} . y, *))\,\,type\,\,[y \in \text{N}_0,\,\,z\in \text{N}_0]}
+    \infer2[E-N$_0$]{\text{El}_{\text{N}_0}(y) \in \text{Id}(\text{N}_0, y, \text{Ap}(\lambda s^{\text{N}_1} . y, *))\,\,[y \in \text{N}_0]}
+\end{prooftree}
+
+
+\end{landscape}
+
+
+\textbf{2.}
+Siccome il tipo $\text{N}_1 \rightarrow \text{N}_0$ corrisponde a $\Pi_{x \in \text{N}_1} \text{N}_0$, allora possiamo dare le seguenti traduzioni, dato il contesto $\Gamma$:
+\begin{itemize}
+    \item $\text{tt} \rightarrow \bot \in Form(\Gamma)$;
+    \item $\neg \text{tt} \in Form(\Gamma)$;
+    \item $(\forall_{x \in \text{N}_1} \bot) \in Form(\Gamma)$.
+\end{itemize}
+Notare che tutte queste formule equivalgono a $\bot \in Form(\Gamma)$
+
+\clearpage
+
+\textbf{Esercizio 5 p. 59}
+
+Sia $Bool = \text{N}_1 + \text{N}_1$ e siano $a, b \in Un_0$. Codificare il tipo $T(a) \times T(b)$ utilizzando solamente $\Pi$, $Bool$ e l'universo $Un_0$.
+ 
+Utilizziamo di seguito le regole di $Bool$ come presentate in precedenza, nello svolgimento dell'esercizio 1 di pagina 27.
+
+Definiamo:
+\begin{itemize}
+    \item il tipo $T(a) \times T(b) \defas \Pi_{q \in Bool} T(\text{El}_{Bool}(q, a, b))$;
+    \item il costruttore $\langle x, y\rangle \defas \lambda p . \text{El}_{Bool}(p, x, y)$; 
+    \item l'eliminatore $\pi_1(d) \defas Ap(d, 0)$; 
+    \item l'eliminatore $\pi_2(d) \defas Ap(d, 1)$.
+\end{itemize}
+
+% Notare che $T(a) = T(\text{El}_{Bool}(0, a, b))\,\,type\,\,[a \in Un_0,\,\,b \in Un_0]$.
+
+% \scalebox{0.8}{
+%     \begin{prooftree}
+%         \hypo{[]\,\,cont}
+%         \infer1[[...]]{Un_0\,\,type\,\,[a \in Un_0,\,\,b \in Un_0,\,\,z \in Bool]}
+%         \hypo{[]\,\,cont}
+%         \infer1[[...]]{a \in Un_0[a \in Un_0,\,\,b \in Un_0]}
+%         \hypo{[]\,\,cont}
+%         \infer1[[...]]{b \in Un_0\,\,[a \in Un_0,\,\,b \in Un_0]}
+%         \infer3[C$_1$-Bool]{a = \text{El}_{Bool}(0, a, b) \in Un_0\,\,[a \in Un_0,\,\,b \in Un_0]}
+%         \infer1[eq-E-$Un_0$]{T(a) = T(\text{El}_{Bool}(0, a, b))\,\,type\,\,[a \in Un_0,\,\,b \in Un_0]}
+%     \end{prooftree}}
+
+% Dualmente $T(b) = T(\text{El}_{Bool}(1, a, b))\,\,type\,\,[a \in Un_0,\,\,b \in Un_0]$:
+
+% \scalebox{0.8}{
+%     \begin{prooftree}
+%         \hypo{[]\,\,cont}
+%         \infer1[[...]]{Un_0\,\,type\,\,[a \in Un_0,\,\,b \in Un_0,\,\,z \in Bool]}
+%         \hypo{[]\,\,cont}
+%         \infer1[[...]]{a \in Un_0[a \in Un_0,\,\,b \in Un_0]}
+%         \hypo{[]\,\,cont}
+%         \infer1[[...]]{b \in Un_0\,\,[a \in Un_0,\,\,b \in Un_0]}
+%         \infer3[C$_1$-Bool]{b = \text{El}_{Bool}(1, a, b) \in Un_0\,\,[a \in Un_0,\,\,b \in Un_0]}
+%         \infer1[eq-E-$Un_0$]{T(b) = T(\text{El}_{Bool}(1, a, b))\,\,type\,\,[a \in Un_0,\,\,b \in Un_0]}
+%     \end{prooftree}}
+
+Viene mostrato di seguito come le regole coincidano con quelle di $T(a) \times T(b)$.
+
+\textbf{Formazione}:
+
+\begin{flalign*}
+\begin{prooftree}
+    \hypo{a \in Un_0\,\,[\Gamma]}
+    \hypo{b \in Un_0\,\,[\Gamma]}
+    \infer2[F-$\times$]{T(a) \times T(b)\,\,type\,\,[\Gamma]}
+\end{prooftree}
+\end{flalign*}
+
+La regola F-$\times$ è derivabile assumendo $a \in Un_0\,\,[\Gamma]$, $b \in Un_0\,\,[\Gamma]$ e $\Gamma\,\,cont$:
+
+\scalebox{0.8}{
+\begin{prooftree}
+    \hypo{\Gamma\,\,cont}
+    \infer1[[...]]{Un_0\,\,type\,\,[\Gamma,\,\,q \in Bool, z \in Bool]}
+    \hypo{\Gamma\,\,cont}
+    \infer1[[...]]{q \in Bool\,\,[\Gamma,\,\,q \in Bool]}
+    \hypo{a \in Un_0\,\,[\Gamma,\,\,q \in Bool]}
+    \hypo{b \in Un_0\,\,[\Gamma,\,\,q \in Bool]}
+    \infer4[E-Bool]{\text{El}_{Bool}(q, a, b) \in Un_0\,\,[\Gamma,\,\,q \in Bool]}
+    \infer1[E-$Un_0$]{T(\text{El}_{Bool}(q, a, b))\,\,type\,\,[\Gamma,\,\,q \in Bool]}
+    \infer1[F-$\Pi$]{\Pi_{q \in Bool} T(\text{El}_{Bool}(q, a, b))\,\,type\,\,[\Gamma]}
+\end{prooftree}}
+
+\textbf{Introduzione}:
+
+Definiamo $\langle x, y\rangle \defas \lambda p . \text{El}_{Bool}(p, x, y)$.
+
+\begin{flalign*}
+\begin{prooftree}
+    \hypo{x \in T(a)\,\,[\Gamma]}
+    \hypo{y \in T(b)\,\,[\Gamma]}
+    \infer2[I-$\times$]{\langle x, y\rangle \in T(a) \times T(b)\,\,[\Gamma]}
+\end{prooftree}
+\end{flalign*}
+
+La regola I-$\times$ è derivabile assumendo $x \in T(a)\,\,[\Gamma]$, $y \in T(b)\,\,[\Gamma]$ e $\Gamma\,\,cont$ (segue nella pagina successiva):
+\begin{landscape}
+
+    
+L'albero è spezzato in rami per facilitare la lettura:
+
+\begin{prooftree}
+    \hypo{\Gamma\,\,cont}
+    \infer1[[...]]{T(\text{El}_{Bool}(p, a, b))\,\,type\,\,[\Gamma,\,\,p \in Bool]}
+    \hypo{\Gamma\,\,cont}
+    \infer1[[...]]{p \in Bool\,\,[\Gamma,\,\,p \in Bool]}
+    \hypo{x \in T(\text{El}_{Bool}(0, a, b))\,\,[\Gamma,\,\,p \in Bool]}
+    \hypo{y \in T(\text{El}_{Bool}(1, a, b))\,\,[\Gamma,\,\,p \in Bool]}
+    \infer4[E-Bool]{\text{El}_{Bool}(p, x, y) \in T(\text{El}_{Bool}(p, a, b))\,\,[\Gamma,\,\,p \in Bool]}
+    \infer1[I-$\Pi$]{\lambda p . \text{El}_{Bool}(p, x, y) \in \Pi_{q \in Bool} T(\text{El}_{Bool}(q, a, b))\,\,[\Gamma]}
+\end{prooftree}
+
+Ramo $x \in T(\text{El}_{Bool}(0, a, b))\,\,[\Gamma,\,\,p \in Bool]$:
+
+\begin{prooftree}
+    \hypo{x \in T(a)\,\,[\Gamma,\,\,p \in Bool]}
+    \hypo{[]\,\,cont}
+    \infer1[[...]]{Un_0\,\,type\,\,[a \in Un_0,\,\,b \in Un_0,\,\,z \in Bool]}
+    \hypo{[]\,\,cont}
+    \infer1[[...]]{a \in Un_0[a \in Un_0,\,\,b \in Un_0]}
+    \hypo{[]\,\,cont}
+    \infer1[[...]]{b \in Un_0\,\,[a \in Un_0,\,\,b \in Un_0]}
+    \infer3[C$_2$-Bool]{a = \text{El}_{Bool}(0, a, b) \in Un_0\,\,[a \in Un_0,\,\,b \in Un_0]}
+    \infer1[eq-E-$Un_0$]{T(a) = T(\text{El}_{Bool}(0, a, b))\,\,type\,\,[a \in Un_0,\,\,b \in Un_0]}
+    \infer2[conv]{x \in T(\text{El}_{Bool}(0, a, b))\,\,[\Gamma,\,\,p \in Bool]}
+\end{prooftree}
+
+Ramo $y \in T(\text{El}_{Bool}(1, a, b))\,\,[\Gamma,\,\,p \in Bool]$:
+
+\begin{prooftree}
+    
+    \hypo{y \in T(b)\,\,[\Gamma,\,\,p \in Bool]}
+    \hypo{[]\,\,cont}
+    \infer1[[...]]{Un_0\,\,type\,\,[a \in Un_0,\,\,b \in Un_0,\,\,z \in Bool]}
+    \hypo{[]\,\,cont}
+    \infer1[[...]]{a \in Un_0[a \in Un_0,\,\,b \in Un_0]}
+    \hypo{[]\,\,cont}
+    \infer1[[...]]{b \in Un_0\,\,[a \in Un_0,\,\,b \in Un_0]}
+    \infer3[C$_1$-Bool]{b = \text{El}_{Bool}(1, a, b) \in Un_0\,\,[a \in Un_0,\,\,b \in Un_0]}
+    \infer1[eq-E-$Un_0$]{T(b) = T(\text{El}_{Bool}(1, a, b))\,\,type\,\,[a \in Un_0,\,\,b \in Un_0]}
+    \infer2[conv]{y \in T(\text{El}_{Bool}(1, a, b))\,\,[\Gamma,\,\,p \in Bool]}
+\end{prooftree}
+
+\end{landscape}
+
+\textbf{Eliminazione}:
+
+Definiamo $\pi_1(d) = Ap(d, 0)$ e $\pi_2(d) = Ap(d, 1)$.
+
+\begin{flalign*}
+    &
+    \begin{prooftree}
+        \hypo{d \in T(a) \times T(b)}
+        \infer1[E$_1$-$\times$]{\pi_1(d) \in T(a)}
+    \end{prooftree}
+    &
+    \begin{prooftree}
+        \hypo{d \in T(a) \times T(b)}
+        \infer1[E$_2$-$\times$]{\pi_2(d) \in T(b)}
+    \end{prooftree} \\
+\end{flalign*}
+
+Le regole sono derivabili assumendo $d \in \Pi_{q \in Bool} T(\text{El}_{Bool}(q, a, b))\,\,[\Gamma]$ e $\Gamma\,\,cont$ (le dimostrazioni sono nella pagina seguente):
+
+\begin{landscape}
+
+    $\pi_1(d) = Ap(d, 0)$
+
+    \scalebox{0.9}{
+    \begin{prooftree}
+        \hypo{\Gamma\,\,cont}
+        \infer1[[...]]{0 \in Bool}
+        \hypo{d \in \Pi_{q \in Bool} T(\text{El}_{Bool}(q, a, b))\,\,[\Gamma]}
+        \infer2[E-$\Pi$]{Ap(d, 0) \in T(\text{El}_{Bool}(0, a, b))\,\,[\Gamma]}
+        \hypo{[]\,\,cont}
+        \infer1[[...]]{Un_0\,\,type\,\,[a \in Un_0,\,\,b \in Un_0,\,\,z \in Bool]}
+        \hypo{[]\,\,cont}
+        \infer1[[...]]{a \in Un_0[a \in Un_0,\,\,b \in Un_0]}
+        \hypo{[]\,\,cont}
+        \infer1[[...]]{b \in Un_0\,\,[a \in Un_0,\,\,b \in Un_0]}
+        \infer3[C$_2$-Bool]{a = \text{El}_{Bool}(0, a, b) \in Un_0\,\,[a \in Un_0,\,\,b \in Un_0]}
+        \infer1[eq-E-$Un_0$]{T(a) = T(\text{El}_{Bool}(0, a, b))\,\,type\,\,[a \in Un_0,\,\,b \in Un_0]}
+        \infer2[conv]{Ap(d, 0) \in T(a)\,\,[\Gamma]}
+    \end{prooftree}}
+    
+    $\pi_2(d) = Ap(d, 1)$:
+
+    \scalebox{0.9}{
+    \begin{prooftree}
+        \hypo{\Gamma\,\,cont}
+        \infer1[[...]]{1 \in Bool}
+        \hypo{d \in \Pi_{q \in Bool} T(\text{El}_{Bool}(q, a, b))\,\,[\Gamma]}
+        \infer2[E-$\Pi$]{Ap(d, 1) \in T(\text{El}_{Bool}(1, a, b))\,\,[\Gamma]}
+        \hypo{[]\,\,cont}
+        \infer1[[...]]{Un_0\,\,type\,\,[a \in Un_0,\,\,b \in Un_0,\,\,z \in Bool]}
+        \hypo{[]\,\,cont}
+        \infer1[[...]]{a \in Un_0[a \in Un_0,\,\,b \in Un_0]}
+        \hypo{[]\,\,cont}
+        \infer1[[...]]{b \in Un_0\,\,[a \in Un_0,\,\,b \in Un_0]}
+        \infer3[C$_1$-Bool]{b = \text{El}_{Bool}(1, a, b) \in Un_0\,\,[a \in Un_0,\,\,b \in Un_0]}
+        \infer1[eq-E-$Un_0$]{T(b) = T(\text{El}_{Bool}(1, a, b))\,\,type\,\,[a \in Un_0,\,\,b \in Un_0]}
+        \infer2[conv]{Ap(d, 1) \in T(b)\,\,[\Gamma]}
+    \end{prooftree}}
+\end{landscape}
+
+\textbf{Conversione}:
+
+\begin{flalign*}
+    &
+    \begin{prooftree}
+        \hypo{x \in T(a)\,\,[\Gamma]}
+        \hypo{y \in T(b)\,\,[\Gamma]}
+        \infer2[$\beta_1$-$\times$]{\pi_1(\langle x, y \rangle) = x \in T(a)\,\,[\Gamma]}
+    \end{prooftree}
+    &
+    \begin{prooftree}
+        \hypo{x \in T(a)\,\,[\Gamma]}
+        \hypo{y \in T(b)\,\,[\Gamma]}
+        \infer2[$\beta_2$-$\times$]{\pi_2(\langle x, y \rangle) = y \in T(b)\,\,[\Gamma]}
+    \end{prooftree} \\
+\end{flalign*}
+
+Le regole sono derivabili assumendo:
+\begin{itemize}
+    \item $x \in T(a)\,\,[\Gamma]$;
+    \item $a \in Un_0\,\,[\Gamma]$;
+    \item $y \in T(b)\,\,[\Gamma]$;
+    \item $b \in Un_0\,\,[\Gamma]$;
+    \item $\Gamma\,\,cont$.
+\end{itemize}
+
+$d \in \Pi_{q \in Bool} T(\text{El}_{Bool}(q, a, b))\,\,[\Gamma]$ e $\Gamma\,\,cont$ (le dimostrazioni sono nella pagina seguente):
+
+\begin{landscape}
+
+Per facilitare la lettura, un ramo in comune a entrambi gli alberi è derivato in coda:
+
+$\pi_1(\langle x, y \rangle) = x \in T(a)\,\,[\Gamma]$:
+
+\scalebox{0.8}{
+    \begin{prooftree}
+        \hypo{\Gamma\,\,cont}
+        \infer1[[...]]{0 \in Bool}
+        \hypo{\text{El}_{Bool}(p, x, y) \in T(\text{El}_{Bool}(p, a, b))\,\,[\Gamma,\,\,p\in Bool]}
+        \infer2[$\beta$-$\Pi$]{Ap(\lambda p . \text{El}_{Bool}(p, x, y), 0) = \text{El}_{Bool}(0, x, y) \in T(\text{El}_{Bool}(0, a, b))\,\,[\Gamma]}
+        \hypo{[]\,\,cont}
+        \infer1[[...]]{Un_0\,\,type\,\,[a \in Un_0,\,\,b \in Un_0,\,\,z \in Bool]}
+        \hypo{[]\,\,cont}
+        \infer1[[...]]{a \in Un_0[a \in Un_0,\,\,b \in Un_0]}
+        \hypo{[]\,\,cont}
+        \infer1[[...]]{b \in Un_0\,\,[a \in Un_0,\,\,b \in Un_0]}
+        \infer3[C$_2$-Bool]{a = \text{El}_{Bool}(0, a, b) \in Un_0\,\,[a \in Un_0,\,\,b \in Un_0]}
+        \infer1[eq-E-$Un_0$]{T(a) = T(\text{El}_{Bool}(0, a, b))\,\,type\,\,[a \in Un_0,\,\,b \in Un_0]}
+        \infer2[conv]{Ap(\lambda p . \text{El}_{Bool}(p, x, y), 0) = \text{El}_{Bool}(0, x, y) \in T(a)\,\,[\Gamma]}
+    \end{prooftree}
+}
+
+$\pi_2(\langle x, y \rangle) = y \in T(b)\,\,[\Gamma]$:
+
+\scalebox{0.8}{
+    \begin{prooftree}
+        \hypo{\Gamma\,\,cont}
+        \infer1[[...]]{1 \in Bool}
+        \hypo{\text{El}_{Bool}(p, x, y) \in T(\text{El}_{Bool}(p, a, b))\,\,[\Gamma,\,\,p\in Bool]}
+        \infer2[$\beta$-$\Pi$]{Ap(\lambda p . \text{El}_{Bool}(p, x, y), 1) = \text{El}_{Bool}(1, x, y) \in T(\text{El}_{Bool}(1, a, b))\,\,[\Gamma]}
+        \hypo{[]\,\,cont}
+        \infer1[[...]]{Un_0\,\,type\,\,[a \in Un_0,\,\,b \in Un_0,\,\,z \in Bool]}
+        \hypo{[]\,\,cont}
+        \infer1[[...]]{a \in Un_0[a \in Un_0,\,\,b \in Un_0]}
+        \hypo{[]\,\,cont}
+        \infer1[[...]]{b \in Un_0\,\,[a \in Un_0,\,\,b \in Un_0]}
+        \infer3[C$_1$-Bool]{b = \text{El}_{Bool}(1, a, b) \in Un_0\,\,[a \in Un_0,\,\,b \in Un_0]}
+        \infer1[eq-E-$Un_0$]{T(b) = T(\text{El}_{Bool}(1, a, b))\,\,type\,\,[a \in Un_0,\,\,b \in Un_0]}
+        \infer2[conv]{Ap(\lambda p . \text{El}_{Bool}(p, x, y), 1) = \text{El}_{Bool}(1, x, y) \in T(b)\,\,[\Gamma]}
+    \end{prooftree}}
+
+Entrambi gli alberi presentano il seguente ramo:
+
+\scalebox{0.6}{
+\begin{prooftree}
+    \hypo{a \in Un_0\,\,[\Gamma,\,\,p \in Bool,\,\,q \in Bool]}
+    \hypo{b \in Un_0\,\,[\Gamma,\,\,p \in Bool,\,\,q \in Bool]}
+    \infer2[[dimostrato in precedenza]]{T(\text{El}_{Bool}(q, a, b))\,\,type\,\,[\Gamma,\,\,p \in Bool,\,\,q \in Bool]}
+    \hypo{\Gamma\,\,cont}
+    \infer1[[...]]{p \in Bool\,\,[\Gamma,\,\,p \in Bool]}
+    \hypo{x \in T(a)\,\,[\Gamma,\,\,p \in Bool]}
+    \hypo{\Gamma\,\,cont}
+    \infer1[[...]]{T(a) = T(\text{El}_{Bool}(0, a, b))\,\,[\Gamma,\,\,p \in Bool]}
+    \infer2[conv]{x \in T(\text{El}_{Bool}(0, a, b))\,\,[\Gamma,\,\,p \in Bool]}
+    \hypo{y \in T(b)\,\,[\Gamma,\,\,p \in Bool]}
+    \hypo{\Gamma\,\,cont}
+    \infer1[[...]]{T(b) = T(\text{El}_{Bool}(1, a, b))\,\,[\Gamma,\,\,p \in Bool]}
+    \infer2[conv]{y \in T(\text{El}_{Bool}(1, a, b))\,\,[\Gamma,\,\,p \in Bool]}
+    \infer4{\text{El}_{Bool}(p, x, y) \in T(\text{El}_{Bool}(p, a, b))\,\,[\Gamma,\,\,p \in Bool]}
+\end{prooftree}}
+
+\end{landscape}
+
+\end{document}
