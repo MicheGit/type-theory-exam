@@ -224,7 +224,7 @@ lemma-*-succ (succ a) b = cong succ (trans (cong (λ x → b + x) (lemma-*-succ 
 
 lemma-distributive : (a b c : ℕ) → ((a + b) * c) ≡ (a * c) + (b * c)
 lemma-distributive a b zero     = trans (lemma-*-zero (a + b)) (trans (trans (symm $ lemma-*-zero a) (symm $ lemma-+-zero (a * zero))) (cong (λ x → (a * zero) + x) (symm $ lemma-*-zero b)))
-lemma-distributive zero b c     = cong (λ x → x + (b * c)) refl
+lemma-distributive zero b c     = refl
 lemma-distributive (succ a) b c = trans (cong (λ x → c + x) (lemma-distributive a b c)) (lemma-+-associative c (a * c) (b * c))
 -- ((succ a + b) * c) ≡ ((succ a * c) + (b * c))
 -- (succ (a + b) * c) ≡ ((c + (a * c)) + (b * c))
@@ -238,3 +238,43 @@ lemma-double-even : (a : ℕ) → Even (a + a)
 lemma-double-even zero     = base-even
 lemma-double-even (succ a) = lemma-pass-out (symm $ lemma-+-succ (succ a) a) (step-even ((lemma-double-even a)))
 
+-- EQUATIONAL REASONING
+
+infix  3 _■ 
+infixr 2 _≡⟨_⟩_ _≡⟨⟩_
+infix  1 begin_
+
+_≡⟨_⟩_ : {A : Set} {y z : A} → (x : A) → x ≡ y → y ≡ z → x ≡ z
+x ≡⟨ p ⟩ q = trans p q
+
+_≡⟨⟩_ : {A : Set} {y : A} → (x : A) → (q : x ≡ y ) → x ≡ y
+x ≡⟨⟩ q = q
+
+_■  : {A : Set} → (x : A) → x ≡ x
+x ■ = refl
+
+begin_ : {A : Set} {x y : A} → x ≡ y → x ≡ y
+begin p = p
+
+lemma-*-distributive : (a b c : ℕ) → ((a + b) * c) ≡ (a * c) + (b * c)
+lemma-*-distributive zero b c     = refl
+lemma-*-distributive (succ a) b c = begin
+  ((succ a + b) * c) ≡⟨⟩
+  (c + ((a + b) * c)) ≡⟨ cong (λ x → c + x) (lemma-*-distributive a b c) ⟩
+  (c + ((a * c) + (b * c))) ≡⟨ lemma-+-associative c (a * c) (b * c) ⟩
+  ((c + (a * c)) + (b * c)) ≡⟨⟩
+  ((succ a * c) + (b * c)) ■
+
+data EvenList : List ℕ → Set where
+  base-even-list : EvenList []
+  step-even-list : {x : ℕ} {xs : List ℕ} → Even x → EvenList xs → EvenList (x ∷ xs)  
+
+data Decision (X : Set) : Set where
+  yes : X  → Decision X
+  no  : (X → ⊥) → Decision X
+
+all-even? : (xs : List ℕ) → Decision (EvenList xs)
+all-even? []       = yes base-even-list
+all-even? (x ∷ xs) with (all-even? xs)
+... | yes p = {!   !}
+... | no  p = {!   !} 
