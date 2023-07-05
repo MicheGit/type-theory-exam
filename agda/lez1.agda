@@ -269,12 +269,3 @@ data EvenList : List ℕ → Set where
   base-even-list : EvenList []
   step-even-list : {x : ℕ} {xs : List ℕ} → Even x → EvenList xs → EvenList (x ∷ xs)  
 
-data Decision (X : Set) : Set where
-  yes : X  → Decision X
-  no  : (X → ⊥) → Decision X
-
-all-even? : (xs : List ℕ) → Decision (EvenList xs)
-all-even? []       = yes base-even-list
-all-even? (x ∷ xs) with (all-even? xs)
-... | yes p = {!   !}
-... | no  p = {!   !} 
