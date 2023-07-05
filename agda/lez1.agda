@@ -2,6 +2,10 @@ infixl -1 _$_
 _$_ : {A B : Set} → (A → B) → A → B
 fn $ a = fn a
 
+infixl 5 _∘_
+_∘_ : {A B C : Set} → (B → C) → (A → B) → (A → C)
+bc ∘ ab = λ a → bc $ ab a 
+
 data Bool : Set where
   true  : Bool
   false : Bool
@@ -178,3 +182,59 @@ cong f refl = refl
 
 symm : {A : Set} {x y : A} → x ≡ y → y ≡ x
 symm refl = refl
+
+trans : {A : Set} {x y z : A} → x ≡ y → y ≡ z → x ≡ z
+trans refl refl = refl
+
+equalfn : {A B : Set} {f g : A → B} → {x : A} → f ≡ g → f x ≡ g x
+equalfn refl = refl
+
+lemma-pred-succ : (a : ℕ) → pred (succ a) ≡ a
+lemma-pred-succ zero     = refl
+lemma-pred-succ (succ n) = refl
+
+lemma-+-zero : (a : ℕ) → (a + zero) ≡ a
+lemma-+-zero zero     = refl
+lemma-+-zero (succ n) = cong succ (lemma-+-zero n)
+
+lemma-+-succ : (a b : ℕ) → (a + succ b) ≡ succ (a + b)
+lemma-+-succ zero b     = refl
+lemma-+-succ (succ n) b = cong succ (lemma-+-succ n b) 
+
+lemma-+-commutative : (a b : ℕ) → (a + b) ≡ (b + a)
+lemma-+-commutative zero zero         = refl
+lemma-+-commutative zero (succ b)     = cong succ (symm (lemma-+-zero b))
+lemma-+-commutative (succ a) zero     = cong succ (lemma-+-zero a)
+lemma-+-commutative (succ a) (succ b) = cong succ (trans (lemma-+-succ a b) (symm (trans (lemma-+-succ b a) (cong succ (lemma-+-commutative b a)))))
+
+lemma-+-associative : (a b c : ℕ) → (a + (b + c)) ≡ ((a + b) + c)
+lemma-+-associative zero     b c        = refl
+lemma-+-associative (succ a) b zero     = cong succ (trans (cong (λ x → a + x) (lemma-+-zero b)) (symm $ lemma-+-zero (a + b)))
+lemma-+-associative (succ a) b (succ c) = cong succ (trans (cong (λ x → a + x) (lemma-+-succ b c)) (trans (lemma-+-succ a (b + c)) (symm $ trans (lemma-+-succ (a + b) c) (cong succ (symm $ lemma-+-associative a b c)) )))
+
+lemma-*-zero : (a : ℕ) → (a * zero) ≡ zero
+lemma-*-zero zero     = refl
+lemma-*-zero (succ a) = lemma-*-zero a
+
+lemma-*-succ : (a b : ℕ) → (a * (succ b)) ≡ (a + (a * b))
+lemma-*-succ zero b     = cong (λ x → zero * x) refl
+lemma-*-succ (succ a) b = cong succ (trans (cong (λ x → b + x) (lemma-*-succ a b)) (trans (lemma-+-associative b a (a * b)) (trans (cong (λ x → x + (a * b)) (lemma-+-commutative b a)) (symm $ lemma-+-associative a b (a * b)))))
+-- (b + (a + (a * b))) ≡ (a + (b + (a * b)))
+-- (b + (a * succ b)) ≡ (b + (a + (a * b)))
+
+lemma-distributive : (a b c : ℕ) → ((a + b) * c) ≡ (a * c) + (b * c)
+lemma-distributive a b zero     = trans (lemma-*-zero (a + b)) (trans (trans (symm $ lemma-*-zero a) (symm $ lemma-+-zero (a * zero))) (cong (λ x → (a * zero) + x) (symm $ lemma-*-zero b)))
+lemma-distributive zero b c     = cong (λ x → x + (b * c)) refl
+lemma-distributive (succ a) b c = trans (cong (λ x → c + x) (lemma-distributive a b c)) (lemma-+-associative c (a * c) (b * c))
+-- ((succ a + b) * c) ≡ ((succ a * c) + (b * c))
+-- (succ (a + b) * c) ≡ ((c + (a * c)) + (b * c))
+-- (c + ((a + b) * c)) ≡ ((c + (a * c)) + (b * c))
+--                     ≡ (c + ((a * c) + (b * c)))
+
+lemma-pass-out : {a b : ℕ} → (a ≡ b) → Even a → Even b
+lemma-pass-out refl a = a
+
+lemma-double-even : (a : ℕ) → Even (a + a)
+lemma-double-even zero     = base-even
+lemma-double-even (succ a) = lemma-pass-out (symm $ lemma-+-succ (succ a) a) (step-even ((lemma-double-even a)))
+
