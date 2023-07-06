@@ -43,12 +43,16 @@ module Verification
     cons      : {x y : A} {ys : List A} → x ≤ y → IsOrdered (y ∷ ys) → IsOrdered (x ∷ y ∷ ys)
 
   lemma₀ : (x y : A) (ys : List A) → y ≤ x → IsOrdered (y ∷ ys) → IsOrdered(y ∷ insert x ys)
-  lemma₀ x y []       y≤x p = {!   !} 
-  lemma₀ x y (z ∷ ys) y≤x p = {!   !}
+  lemma₀ x y []       y≤x p = cons y≤x singleton 
+  lemma₀ x y (z ∷ ys) y≤x (cons y≤z oz) with cmp x z
+  ... | left  x≤z = cons y≤x (cons x≤z oz)
+  ... | right z≤x = cons y≤z (lemma₀ x z ys z≤x oz)
 
   lemma : (x : A) (ys : List A) → IsOrdered ys → IsOrdered (insert x ys)
   lemma x []       p = singleton
-  lemma x (y ∷ ys) p = {!   !}
+  lemma x (y ∷ ys) p with cmp x y
+  ... | left  x≤y = cons x≤y p           -- IsOrdered x ∷ y ∷ ys
+  ... | right y≤x = lemma₀ x y ys y≤x p  -- IsOrdered y ∷ insert x ys
 
   theorem : (xs : List A) → IsOrdered (sort xs)
   theorem []       = empty
