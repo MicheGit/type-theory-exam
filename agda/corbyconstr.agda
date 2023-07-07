@@ -1,3 +1,7 @@
+data List (A : Set) : Set where
+  []  : List A 
+  _∷_ : A → List A → List A
+
 data _⨄_ (A B : Set) : Set where
   left  : A → A ⨄ B
   right : B → A ⨄ B
@@ -22,10 +26,12 @@ module CorrectByConstruction
   head nil          = max
   head (cons x _ _) = x
 
-  -- lemma-head : (x y : A) (ys : OList) → y ≤ head ys → y ≤ x → y ≤ head 
-
   insert : A → OList → OList
   insert x nil                = cons x nil ≤max
-  insert x (cons y ys y≤head) with cmp x y
-  ... | left  x≤y = cons x (cons y ys y≤head) x≤y
-  ... | right y≤x = cons y (insert x ys) {!   !}
+  insert x (cons y ys y≤max) with cmp x y
+  ... | left  x≤y = cons x (cons y ys y≤max) x≤y
+  ... | right y≤x = {!   !}
+
+  sort : List A → OList
+  sort []       = nil
+  sort (x ∷ xs) = insert x (sort xs) 
