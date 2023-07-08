@@ -28,10 +28,15 @@ module CorrectByConstruction
 
   insert : A → OList → OList
   insert x nil                = cons x nil ≤max
-  insert x (cons y ys y≤max) with cmp x y
-  ... | left  x≤y = cons x (cons y ys y≤max) x≤y
-  ... | right y≤x = {!   !}
+  insert x (cons y ys y≤head) with cmp x y
+  ... | left  x≤y = cons x (cons y ys y≤head) x≤y
+  ... | right y≤x with insert x ys
+  ...     | nil = cons y nil ≤max
+  ...     | cons z zs z≤head with cmp y z
+  ...         | left  y≤z = cons y (cons z zs z≤head) y≤z
+  ...         | right z≤y = cons z nil ≤max
 
   sort : List A → OList
   sort []       = nil
   sort (x ∷ xs) = insert x (sort xs) 
+ 
