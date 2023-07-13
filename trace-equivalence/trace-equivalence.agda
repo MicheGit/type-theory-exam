@@ -1,76 +1,109 @@
-data ℕ : Set where
-  zero : ℕ
-  succ : ℕ → ℕ
 
-data List (A : Set) : Set where
-  []  : List A
-  _∷_ : A → List A → List A
 
-data _×_ (A B : Set) : Set where
-  [_,_] : A → B → A × B 
+data ℘ (A : Set) : Set where
+  ∅ : ℘ A
+  ⟨_⟩ : A → ℘ A
+  _∪_ : ℘ A → ℘ A → ℘ A
+  _∩_ : ℘ A → ℘ A → ℘ A
 
-π₁ : {A B : Set} → A × B → A
-π₁ [ a , b ] = a
-
-π₂ : {A B : Set} → A × B → B
-π₂ [ a , b ] = b
-
-data _∈_ {A : Set} : A → List A → Set where
-  head : {a : A} {l : List A} → a ∈ (a ∷ l)
-  tail : {a b : A} {l : List A} → a ∈ l → a ∈ (b ∷ l)
+data _≡_ {A : Set} : A → A → Set where
+  refl : {a : A} → a ≡ a
 
 data ⊥ : Set where
 
-¬ : Set → Set
+¬ : (A : Set) → Set
 ¬ A = A → ⊥
 
-data _∉_ {A : Set} : A → List A → Set where
+_≢_ : {A : Set} → A → A → Set
+a ≢ b = ¬ (a ≡ b)
 
+data _∈_ {A : Set} : A → ℘ A → Set where
+  singleton : {a b : A} → a ≡ b → a ∈ ⟨ b ⟩
+  i-∪-left  : {a : A} {s t : ℘ A} → a ∈ s → a ∈ (s ∪ t)
+  i-∪-right : {a : A} {s t : ℘ A} → a ∈ t → a ∈ (s ∪ t)
+  i-∩       : {a : A} {s t : ℘ A} → a ∈ s → a ∈ t → a ∈ (s ∩ t) 
+
+data _∉_ {A : Set} : A → ℘ A → Set where
+  empty     : {a : A} → a ∉ ∅
+  ∉-single  : {a b : A} → a ≢ b → a ∉ ⟨ b ⟩
+  n-∪       : {a : A} {s t : ℘ A} → a ∉ s → a ∉ t → a ∉ (s ∪ t)
+  n-∩-left  : {a : A} {s t : ℘ A} → a ∉ s → a ∉ (s ∩ t)
+  n-∩-right : {a : A} {s t : ℘ A} → a ∉ t → a ∉ (s ∩ t)
+
+data Channel : Set where
+
+-- In CCS an action might be:
+--  - a communication over a certain channel α, γ, etc..
+--  - a hidden (internal) state transition (τ)
 data Act : Set where
   τ : Act
+  ↑ : Channel → Act
 
+-- A (finite / complete) trace is a sequence of actions.
+-- It is a way to represent the behaviour of a process.
 data Trace : Set where
   ε : Trace
   _∷_ : Act → Trace → Trace 
 
+-- Processes can be represented by a set of possible
+--  single-step transitions. Processes may perform
+--  some kind of action and then becoming another 
+--  process. 
+-- 
+-- The constructors of Proc, along with the SOS rules
+--  defined later, describe the set of possible actions
+--  that a process can perform.
 data Proc : Set where
-  p : Proc
-  q : Proc
-  r : Proc
-  _∙_ : Act → Proc → Proc 
-  _+_ : Proc → Proc → Proc
-  _∥_ : Proc → Proc → Proc
-  _∖_ : Proc → List Act → Proc
-  _[_] : Proc → (Act → Act) → Proc
+  ∅ : Proc                          -- the empty process can perform no action
+  _∙_ : Channel → Proc → Proc       -- α ∙ P can communicate over a channel α
+                                    -- and then it behaves as P would
+  _+_ : Proc → Proc → Proc          -- P + Q can behave as P or Q
+  _∥_ : Proc → Proc → Proc          -- P ∥ Q composes P and Q in a single process
+                                    -- allowing those two processes to communicate
+                                    -- with each other
+  _∖_ : Proc → ℘ Channel → Proc     -- P ∖ L can communicate only in channels that
+                                    -- are not in L
+  _[_] : Proc → (Channel → Channel) → Proc  -- P [ f ] redirects all communication as specified by f 
 
+
+-- Structural Operational Semantics for CCS processes  
 data Step : Proc → Act → Proc → Set where
-  step-act  : {α : Act} {p : Proc} → Step (α ∙ p) α p
-  step-sum₁ : {α : Act} {p r p₁ : Proc} → Step p α p₁ → Step (p + r) α p₁
-  step-sum₂ : {α : Act} {p r r₁ : Proc} → Step r α r₁ → Step (p + r) α r₁
-  step-par₁ : {α : Act} {p r p₁ : Proc} → Step p α p₁ → Step (p ∥ r) α (p₁ ∥ r)
-  step-par₂ : {α : Act} {p r r₁ : Proc} → Step r α r₁ → Step (p ∥ r) α (p ∥ r₁)
-  step-par₃ : {α : Act} {p p₁ r r₁ : Proc} → Step p α p₁ → Step r α r₁ → Step (p ∥ r) τ (p₁ ∥ r₁)
-  step-res  : {α : Act} {l : List Act} {p p₁ : Proc} → α ∉ l → Step p α p₁ → Step (p ∖ l) α (p₁ ∖ l)
-  step-ren  : {α : Act} {f : Act → Act} {p p₁ : Proc} → Step p α p₁ → Step (p [ f ]) (f(α)) (p₁ [ f ])
+  step-act  : {p : Proc} {a : Channel} → Step (a ∙ p) (↑ a) p
+  step-sum₁ : {p q p₁ : Proc} {a : Channel} → Step p (↑ a) p₁ → Step (p + q) (↑ a) p₁
+  step-sum₂ : {p q q₁ : Proc} {a : Channel} → Step q (↑ a) q₁ → Step (p + q) (↑ a) q₁
+  step-par₁ : {p q p₁ : Proc} {a : Channel} → Step p (↑ a) p₁ → Step (p ∥ q) (↑ a) (p₁ ∥ q)
+  step-par₂ : {p q q₁ : Proc} {a : Channel} → Step q (↑ a) q₁ → Step (p ∥ q) (↑ a) (p ∥ q₁)
+  step-par₃ : {p q p₁ q₁ : Proc} {a : Channel} → Step p (↑ a) p₁ → Step q (↑ a) q₁ → Step (p ∥ q) τ (p₁ ∥ q₁)
+  step-res  : {p p₁ : Proc} {a : Channel} {l : ℘ Channel} → a ∉ l → Step p (↑ a) p₁ → Step (p ∖ l) (↑ a) (p₁ ∖ l)
+  step-ren  : {p p₁ : Proc} {a : Channel} {f : Channel → Channel} → Step p (↑ a) p₁ → Step (p [ f ]) (↑ (f a)) (p₁ [ f ])  
+
 
 data _∈Tr_ : Trace → Proc → Set where
   ε-trace : {p : Proc} → ε ∈Tr p
   ∷-trace : {p p₁ : Proc} {α : Act} {w : Trace} → (Step p α p₁) → (w ∈Tr p₁) → (α ∷ w) ∈Tr p
 
+_⊆Tr_ : (p q : Proc) → Set
+p ⊆Tr q = {t : Trace} → t ∈Tr p → t ∈Tr q
 
 data _≡Tr_ (p q : Proc) : Set where
-  _⇔_ : ({t : Trace} → t ∈Tr p → t ∈Tr q) → ({t : Trace} → t ∈Tr q → t ∈Tr p) → p ≡Tr q
+  _⇔_ : (p ⊆Tr q) → (q ⊆Tr p) → p ≡Tr q
 
+-- Proof
 
--- Trace equivalence is compositional
+-- Action
+⇒-act : {p q : Proc} {α : Channel} → p ⊆Tr q → (α ∙ p) ⊆Tr (α ∙ q)
+⇒-act conv ε-trace = ε-trace
+⇒-act conv (∷-trace step-act w∈p) = ∷-trace step-act (conv w∈p)
 
-lemma-act : {s : Trace} {p q : Proc} {α : Act} → ({t : Trace} → t ∈Tr p → t ∈Tr q) → s ∈Tr (α ∙ p) → s ∈Tr (α ∙ q)
-lemma-act conv ε-trace = ε-trace
-lemma-act conv (∷-trace step-act trace) = ∷-trace step-act (conv trace)
+comp-act : {p q : Proc} {α : Channel} → p ≡Tr q → (α ∙ p) ≡Tr (α ∙ q)
+comp-act (pq ⇔ qp) = ⇒-act pq ⇔ ⇒-act qp
 
-comp-act : {p q : Proc} {α : Act} → p ≡Tr q → (α ∙ p) ≡Tr (α ∙ q)
-comp-act (pq ⇔ qp) = lemma-act pq ⇔ lemma-act qp
+-- Sum
+
+⇒-sum : {p q r : Proc} → p ⊆Tr q → (p + r) ⊆Tr (q + r)
+⇒-sum conv ε-trace = ε-trace
+⇒-sum conv (∷-trace x trace) = {!   !} 
 
 comp-sum : {p q r : Proc} → p ≡Tr q → (p + r) ≡Tr (q + r)
-comp-sum (pq ⇔ qp) = {!   !} ⇔ {!   !}
+comp-sum (pq ⇔ qp) = ⇒-sum pq ⇔ ⇒-sum qp
 
