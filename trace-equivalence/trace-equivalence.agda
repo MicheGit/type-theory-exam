@@ -1,5 +1,3 @@
-
-
 data ℘ (A : Set) : Set where
   ∅ : ℘ A
   ⟨_⟩ : A → ℘ A
@@ -80,7 +78,7 @@ data Step : Proc → Act → Proc → Set where
 
 data _∈Tr_ : Trace → Proc → Set where
   ε-trace : {p : Proc} → ε ∈Tr p
-  ∷-trace : {p p₁ : Proc} {α : Act} {w : Trace} → (Step p α p₁) → (w ∈Tr p₁) → (α ∷ w) ∈Tr p
+  ∷-trace : {p p₁ : Proc} {a : Act} {w : Trace} → (Step p a p₁) → (w ∈Tr p₁) → (a ∷ w) ∈Tr p
 
 _⊆Tr_ : (p q : Proc) → Set
 p ⊆Tr q = {t : Trace} → t ∈Tr p → t ∈Tr q
@@ -91,18 +89,21 @@ data _≡Tr_ (p q : Proc) : Set where
 -- Proof
 
 -- Action
-⇒-act : {p q : Proc} {α : Channel} → p ⊆Tr q → (α ∙ p) ⊆Tr (α ∙ q)
+⇒-act : {p q : Proc} {a : Channel} → p ⊆Tr q → (a ∙ p) ⊆Tr (a ∙ q)
 ⇒-act conv ε-trace = ε-trace
 ⇒-act conv (∷-trace step-act w∈p) = ∷-trace step-act (conv w∈p)
 
-comp-act : {p q : Proc} {α : Channel} → p ≡Tr q → (α ∙ p) ≡Tr (α ∙ q)
+comp-act : {p q : Proc} {a : Channel} → p ≡Tr q → (a ∙ p) ≡Tr (a ∙ q)
 comp-act (pq ⇔ qp) = ⇒-act pq ⇔ ⇒-act qp
 
 -- Sum
 
+_∪Tr_ : (p q : Proc) → ℘ Trace
+p ∪Tr q = {!   !}
+
 ⇒-sum : {p q r : Proc} → p ⊆Tr q → (p + r) ⊆Tr (q + r)
 ⇒-sum conv ε-trace = ε-trace
-⇒-sum conv (∷-trace x trace) = {!   !} 
+⇒-sum conv (∷-trace x trace) = ∷-trace {!   !} {!   !} 
 
 comp-sum : {p q r : Proc} → p ≡Tr q → (p + r) ≡Tr (q + r)
 comp-sum (pq ⇔ qp) = ⇒-sum pq ⇔ ⇒-sum qp
