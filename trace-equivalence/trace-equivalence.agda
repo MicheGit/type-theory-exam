@@ -97,13 +97,16 @@ data Proc : Set where
 data Step : Proc → Act → Proc → Set where
   step-act  : {p : Proc} {a : Channel} → Step (a ∙ p) (↑ a) p
   
-  step-sum₁ : {p q p₁ : Proc} {a : Channel} → Step p (↑ a) p₁ → Step (p + q) (↑ a) p₁
-  step-sum₂ : {p q q₁ : Proc} {a : Channel} → Step q (↑ a) q₁ → Step (p + q) (↑ a) q₁
+  step-sum₁ : {p q p₁ : Proc} {a : Act} → Step p a p₁ → Step (p + q) a p₁
+  step-sum₂ : {p q q₁ : Proc} {a : Act} → Step q a q₁ → Step (p + q) a q₁
 
   step-par₁ : {p q p₁ : Proc} {a : Channel} → Step p (↑ a) p₁ → Step (p ∥ q) (↑ a) (p₁ ∥ q)
   step-par₂ : {p q q₁ : Proc} {a : Channel} → Step q (↑ a) q₁ → Step (p ∥ q) (↑ a) (p ∥ q₁)
   step-par₃ : {p q p₁ q₁ : Proc} {a : Channel} → Step p (↑ a) p₁ → Step q (↑ a) q₁ → Step (p ∥ q) τ (p₁ ∥ q₁)
+  
   step-res  : {p p₁ : Proc} {a : Channel} {l : ℘ Channel} → a ∉ l → Step p (↑ a) p₁ → Step (p ∖ l) (↑ a) (p₁ ∖ l)
+  step-res-τ : {p p₁ : Proc} {l : ℘ Channel} → Step p τ p₁ → Step (p ∖ l) τ (p₁ ∖ l)
+  
   step-ren  : {p p₁ : Proc} {a : Channel} {f : Channel → Channel} → Step p (↑ a) p₁ → Step (p [ f ]) (↑ (f a)) (p₁ [ f ])  
 
 
@@ -115,14 +118,6 @@ data _∈Tr_ : Trace → Proc → Set where
   ε-trace : {p : Proc} → ε ∈Tr p
   ∷-trace : {p p₁ : Proc} {a : Act} {w : Trace} → (Step p a p₁) → (w ∈Tr p₁) → (a ∷ w) ∈Tr p
 
--- lemma-trace-inv : {p p₁ : Proc} {a : Act} {w : Trace} → (a ∷ w) ∈Tr p → (Step p a p₁) × (w ∈Tr p₁)
--- lemma-trace-inv (∷-trace x trace) = {! [ x , trace ]  !}
-
--- lemma-trace-trans : {p p₁ : Proc} {a : Act} {w : Trace} → (a ∷ w) ∈Tr p → Step p a p₁
--- lemma-trace-trans trace = π₁ (lemma-trace-inv trace)
-
--- lemma-trace-tail : {p p₁ : Proc} {a : Act} {w : Trace} → (a ∷ w) ∈Tr p → w ∈Tr p₁
--- lemma-trace-tail trace = π₂ (lemma-trace-inv trace)
 
 _⊆Tr_ : (p q : Proc) → Set
 p ⊆Tr q = {t : Trace} → t ∈Tr p → t ∈Tr q
@@ -150,11 +145,11 @@ comp-act (pq ⇔ qp) = ⇒-act pq ⇔ ⇒-act qp
 
 →-trace-sum₁ : {t : Trace} {p r : Proc} → t ∈Tr p → t ∈Tr (p + r)
 →-trace-sum₁ ε-trace = ε-trace
-→-trace-sum₁ (∷-trace step trace) = ∷-trace {!   !} trace
+→-trace-sum₁ (∷-trace step trace) = ∷-trace (step-sum₁ step) trace
 
 →-trace-sum₂ : {t : Trace} {p r : Proc} → t ∈Tr r → t ∈Tr (p + r)
 →-trace-sum₂ ε-trace = ε-trace
-→-trace-sum₂ (∷-trace step trace) = ∷-trace {!   !} trace
+→-trace-sum₂ (∷-trace step trace) = ∷-trace (step-sum₂ step) trace
 
 trace-sum : Trace → Trace → ℘ Trace
 trace-sum t s = ⟨ t ⟩ ∪ ⟨ s ⟩
@@ -163,16 +158,31 @@ trace-sum-⇒-sum : {tp tr : Trace} {p r : Proc} → tp ∈Tr p → tr ∈Tr r �
 trace-sum-⇒-sum tp∈p tr∈r (i-∪-left  singleton) = →-trace-sum₁ tp∈p
 trace-sum-⇒-sum tp∈p tr∈r (i-∪-right singleton) = →-trace-sum₂ tr∈r
 
-sum-⇒-trace-sum : {t : Trace} {p r : Proc} → t ∈Tr (p + r) → ∃[ tp ] (∃[ tr ] (t ∈ (trace-sum tp tr)))
-sum-⇒-trace-sum ε-trace = ⟨ ε  , ⟨ ε  , i-∪-left singleton ⟩ ⟩
-sum-⇒-trace-sum (∷-trace step t∈sum) = {!   !}
+sum-⇒-trace-sum : {t : Trace} {p r : Proc} → t ∈Tr (p + r) → ∃[ tp ] (∃[ tr ] (((tp ∈Tr p) × (tr ∈Tr r)) × (t ∈ (trace-sum tp tr))))
+sum-⇒-trace-sum {t} {p} {r} trace with ←-trace-sum trace
+... | left  p-trace = ⟨ t , ⟨ ε , [ [ p-trace , ε-trace ] , (i-∪-left singleton) ] ⟩ ⟩
+... | right r-trace = ⟨ ε , ⟨ t , [ [ ε-trace , r-trace ] , (i-∪-right singleton) ] ⟩ ⟩
 
--- ⇒-sum : {p q r : Proc} → p ⊆Tr q → (p + r) ⊆Tr (q + r)
--- ⇒-sum conv ε-trace = ε-trace
--- ⇒-sum conv (∷-trace (step-sum₁ p→p₁) w∈p₁) = ∷-trace (step-sum₁ {!   !}) {! !}
--- ⇒-sum conv (∷-trace (step-sum₂ r→r₁) w∈r₁) = ∷-trace (step-sum₂ r→r₁) w∈r₁ 
+⇒-sum : {p q r : Proc} → p ⊆Tr q → (p + r) ⊆Tr (q + r)
+⇒-sum pq t∈p+r with ←-trace-sum t∈p+r
+... | left  p-path = →-trace-sum₁ (pq p-path)
+... | right r-path = →-trace-sum₂ r-path
 
--- comp-sum : {p q r : Proc} → p ≡Tr q → (p + r) ≡Tr (q + r)
--- comp-sum (pq ⇔ qp) = ⇒-sum pq ⇔ ⇒-sum qp
+comp-sum : {p q r : Proc} → p ≡Tr q → (p + r) ≡Tr (q + r)
+comp-sum (pq ⇔ qp) = ⇒-sum pq ⇔ ⇒-sum qp
 
- 
+-- restriction
+
+←-trace-res-a : {p p₁ : Proc} {a : Channel} {l : ℘ Channel} → Step (p ∖ l) (↑ a) (p₁ ∖ l) → (Step p (↑ a) p₁) × (a ∉ l)
+←-trace-res-a (step-res x step) = [ step , x ]
+
+←-trace-res-τ : {p p₁ : Proc} {l : ℘ Channel} → Step (p ∖ l) τ (p₁ ∖ l) → Step p τ p₁
+←-trace-res-τ (step-res-τ step) = step
+
+⇒-res : {p q : Proc} {l : ℘ Channel} → p ⊆Tr q → (p ∖ l) ⊆Tr (q ∖ l)
+⇒-res pq ε-trace = ε-trace
+⇒-res pq (∷-trace (step-res a∉l step) w∈p₁) = {!   !}
+⇒-res pq (∷-trace (step-res-τ step) w∈p₁) = ∷-trace (step-res-τ {!   !}) {! ⇒-res pq w∈p₁  !}
+
+comp-res : {p q : Proc} {l : ℘ Channel} → p ≡Tr q → (p ∖ l) ≡Tr (q ∖ l)
+comp-res (pq ⇔ qp) = ⇒-res pq ⇔ ⇒-res qp
