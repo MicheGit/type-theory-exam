@@ -57,6 +57,9 @@ data _∉_ {A : Set} : A → ℘ A → Set where
   n-∩-left  : {a : A} {s t : ℘ A} → a ∉ s → a ∉ (s ∩ t)
   n-∩-right : {a : A} {s t : ℘ A} → a ∉ t → a ∉ (s ∩ t)
 
+contains : {A : Set} (s : ℘ A) (a : A) → (a ∈ s) ⨄ (a ∉ s)
+contains s a = {!   !}
+
 data Channel : Set where
 
 -- In CCS an action might be:
@@ -173,16 +176,37 @@ comp-sum (pq ⇔ qp) = ⇒-sum pq ⇔ ⇒-sum qp
 
 -- restriction
 
-←-trace-res-a : {p p₁ : Proc} {a : Channel} {l : ℘ Channel} → Step (p ∖ l) (↑ a) (p₁ ∖ l) → (Step p (↑ a) p₁) × (a ∉ l)
-←-trace-res-a (step-res x step) = [ step , x ]
+restriction : Trace → ℘ Channel → Trace
+restriction ε l = ε
+restriction (τ ∷ w) l = τ ∷ restriction w l
+restriction ((↑ a) ∷ w) l with contains l a
+... | left  a∈l = ε
+... | right a∉l = (↑ a) ∷ (restriction w l)
 
-←-trace-res-τ : {p p₁ : Proc} {l : ℘ Channel} → Step (p ∖ l) τ (p₁ ∖ l) → Step p τ p₁
-←-trace-res-τ (step-res-τ step) = step
+←-trace-res : {t : Trace} {p : Proc} {l : ℘ Channel} → t ∈Tr p → (restriction t l) ∈Tr (p ∖ l)
+←-trace-res {ε} t∈p = ε-trace
+←-trace-res {τ ∷ w} {p} {l} (∷-trace step w∈p₁) = ∷-trace (step-res-τ step) (←-trace-res w∈p₁)
+←-trace-res {(↑ a) ∷ w} {p} {l} (∷-trace step w∈p₁) with contains l a
+... | left  a∈l = ε-trace
+... | right a∉l = ∷-trace (step-res a∉l step) (←-trace-res w∈p₁)
+
+→-trace-res : {s : Trace} {p : Proc} {l : ℘ Channel} → s ∈Tr (p ∖ l) → ∃[ t ] ((t ∈Tr p) × ((restriction t l) ≡ s))
+→-trace-res ε-trace = ⟨ ε , [ ε-trace , refl ] ⟩
+→-trace-res {τ ∷ w} (∷-trace (step-res-τ step) wpl) with →-trace-res wpl
+... | ⟨ s₁ , [ s∈p₁ , refl ] ⟩ = ⟨ τ ∷ s₁ , [ ∷-trace step s∈p₁ , refl ] ⟩
+→-trace-res {(↑ a) ∷ w} (∷-trace (step-res a∉l step) wpl) with →-trace-res wpl
+... | ⟨ s₁ , [ s∈p₁ , refl ] ⟩ = ⟨ (↑ a) ∷ s₁ , [ ∷-trace step s∈p₁ , {!   !} ] ⟩
 
 ⇒-res : {p q : Proc} {l : ℘ Channel} → p ⊆Tr q → (p ∖ l) ⊆Tr (q ∖ l)
-⇒-res pq ε-trace = ε-trace
-⇒-res pq (∷-trace (step-res a∉l step) w∈p₁) = {!   !}
-⇒-res pq (∷-trace (step-res-τ step) w∈p₁) = ∷-trace (step-res-τ {!   !}) {! ⇒-res pq w∈p₁  !}
+⇒-res pq tpl with →-trace-res tpl 
+... | ⟨ t , [ t∈p , refl ] ⟩ = ←-trace-res (pq t∈p)
 
 comp-res : {p q : Proc} {l : ℘ Channel} → p ≡Tr q → (p ∖ l) ≡Tr (q ∖ l)
 comp-res (pq ⇔ qp) = ⇒-res pq ⇔ ⇒-res qp
+
+-- Renaming - relabeling
+
+
+
+comp-ren : {p q : Proc} {f : Channel → Channel} → p ≡Tr q → (p [ f ]) ≡Tr (q [ f ])
+comp-ren (pq ⇔ qp) = {!   !} ⇔ {!   !}
