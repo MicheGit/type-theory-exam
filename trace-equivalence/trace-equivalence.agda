@@ -282,9 +282,8 @@ module TraceEquivalence
   →-trace-res ε-trace = ⟨ ε , [ ε-trace , refl ] ⟩
   →-trace-res {τ ∷ w} (∷-trace (step-res-τ step) wpl) with →-trace-res wpl
   ... | ⟨ s₁ , [ s∈p₁ , refl ] ⟩ = ⟨ τ ∷ s₁ , [ ∷-trace step s∈p₁ , refl ] ⟩
-  →-trace-res {(↑ a) ∷ w} {l} (∷-trace (step-res _ step) wpl) with →-trace-res wpl
-  ... | ⟨ s₁ , [ s∈p₁ , refl ] ⟩ with contains l a
-  ...   | right a∉l = ⟨ (↑ a) ∷ s₁ , [ ∷-trace step s∈p₁ , {!   !} ] ⟩ -- refl
+  →-trace-res {(↑ a) ∷ w} {l} (∷-trace (step-res _ step) wpl) with →-trace-res wpl | contains l a
+  ... | ⟨ s₁ , [ s∈p₁ , refl ] ⟩ | right a∉l = ⟨ (↑ a) ∷ s₁ , [ ∷-trace step s∈p₁ , {! refl !} ] ⟩ -- refl
 
   ⇒-res : {p q : Proc} {l : ℘ Channel} → p ⊆Tr q → (p ∖ l) ⊆Tr (q ∖ l)
   ⇒-res pq tpl with →-trace-res tpl 
