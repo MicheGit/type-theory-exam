@@ -92,7 +92,10 @@ module TraceEquivalence
   (map : {A B : Set} → (A → B) → ℘ A → ℘ B)
   (_∈_ : {A : Set} → A → ℘ A → Set)
   (_∉_ : {A : Set} → A → ℘ A → Set)
-  (contains : {A : Set} (s : ℘ A) (a : A) → (a ∈ s) ⨄ (a ∉ s)) where
+  (excl-∈ : {A : Set} {x : A} {s : ℘ A} → x ∈ s → ¬ (x ∉ s))
+  (excl-∉ : {A : Set} {x : A} {s : ℘ A} → x ∉ s → ¬ (x ∈ s))
+  (contains : {A : Set} (s : ℘ A) (a : A) → (a ∈ s) ⨄ (a ∉ s))
+  (lemma-contains : {A : Set} (s : ℘ A) (a : A) (a∉s : a ∉ s) → contains s a ≡ right a∉s) where
 
   -- No representation of channels is needed.
   data Channel : Set where
@@ -271,6 +274,10 @@ module TraceEquivalence
   ... | left  a∈l = ε
   ... | right a∉l = (↑ a) ∷ (restriction w l)
 
+  lemma-restriction : {a : Channel} {w : Trace} {l : ℘ Channel} → a ∉ l → restriction (↑ a ∷ w) l ≡ (↑ a ∷ restriction w l)
+  lemma-restriction {a} {w} {l} a∉l with contains l a
+  ... | right a∉l = refl
+
   ←-trace-res : {t : Trace} {p : Proc} {l : ℘ Channel} → t ∈Tr p → (restriction t l) ∈Tr (p ∖ l)
   ←-trace-res {ε} t∈p = ε-trace
   ←-trace-res {τ ∷ w} {p} {l} (∷-trace step w∈p₁) = ∷-trace (step-res-τ step) (←-trace-res w∈p₁)
@@ -283,7 +290,7 @@ module TraceEquivalence
   →-trace-res {τ ∷ w} (∷-trace (step-res-τ step) wpl) with →-trace-res wpl
   ... | ⟨ s₁ , [ s∈p₁ , refl ] ⟩ = ⟨ τ ∷ s₁ , [ ∷-trace step s∈p₁ , refl ] ⟩
   →-trace-res {(↑ a) ∷ w} {l} (∷-trace (step-res _ step) wpl) with →-trace-res wpl | contains l a
-  ... | ⟨ s₁ , [ s∈p₁ , refl ] ⟩ | right a∉l = ⟨ (↑ a) ∷ s₁ , [ ∷-trace step s∈p₁ , {! refl !} ] ⟩ -- refl
+  ... | ⟨ s₁ , [ s∈p₁ , refl ] ⟩ | right a∉l = ⟨ (↑ a) ∷ s₁ , [ ∷-trace step s∈p₁ , lemma-restriction a∉l ] ⟩ -- refl
 
   ⇒-res : {p q : Proc} {l : ℘ Channel} → p ⊆Tr q → (p ∖ l) ⊆Tr (q ∖ l)
   ⇒-res pq tpl with →-trace-res tpl 
