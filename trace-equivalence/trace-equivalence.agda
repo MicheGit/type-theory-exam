@@ -84,18 +84,10 @@ Context:
 
 
 module TraceEquivalence
-  {℘ : Set → Set}
-  {empty : {A : Set} → ℘ A}
-  {singleton : {A : Set} → A → ℘ A}
-  {_∪_ : {A : Set} → ℘ A → ℘ A → ℘ A}
-  {unions : {A : Set} → ℘ (℘ A) → ℘ A}
-  (map : {A B : Set} → (A → B) → ℘ A → ℘ B)
-  (_∈_ : {A : Set} → A → ℘ A → Set)
+  {℘ : Set → Set}                       -- The powerset models all possible subsets of a set (also called Boolean in some literatures)
+  (_∈_ : {A : Set} → A → ℘ A → Set)     
   (_∉_ : {A : Set} → A → ℘ A → Set)
-  (excl-∈ : {A : Set} {x : A} {s : ℘ A} → x ∈ s → ¬ (x ∉ s))
-  (excl-∉ : {A : Set} {x : A} {s : ℘ A} → x ∉ s → ¬ (x ∈ s))
-  (contains : {A : Set} (s : ℘ A) (a : A) → (a ∈ s) ⨄ (a ∉ s))
-  (lemma-contains : {A : Set} (s : ℘ A) (a : A) (a∉s : a ∉ s) → contains s a ≡ right a∉s) where
+  (contains : {A : Set} (s : ℘ A) (a : A) → (a ∈ s) ⨄ (a ∉ s)) where
 
   -- No representation of channels is needed.
   data Channel : Set where
