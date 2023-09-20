@@ -84,13 +84,11 @@ Context:
 
 
 module TraceEquivalence
+  {Channel : Set}
   {℘ : Set → Set}                       -- The powerset models all possible subsets of a set (also called Boolean in some literatures)
   (_∈_ : {A : Set} → A → ℘ A → Set)     
   (_∉_ : {A : Set} → A → ℘ A → Set)
   (contains : {A : Set} (s : ℘ A) (a : A) → (a ∈ s) ⨄ (a ∉ s)) where
-
-  -- No representation of channels is needed.
-  data Channel : Set where
 
   -- In CCS an action might be:
   --  - a communication over a certain channel α, γ, etc..
