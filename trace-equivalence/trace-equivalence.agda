@@ -33,6 +33,9 @@ data ⊥ : Set where
 ¬ : (A : Set) → Set
 ¬ A = A → ⊥
 
+false-implication : {A : Set} → ⊥ → A
+false-implication ()
+
 {-
 Context:
   CCS (Calculus of Communicating Systems) is a language describing systems which perform
@@ -88,7 +91,8 @@ module TraceEquivalence
   {℘ : Set → Set}                       -- The powerset models all possible subsets of a set (also called Boolean in some literatures)
   (_∈_ : {A : Set} → A → ℘ A → Set)     
   (_∉_ : {A : Set} → A → ℘ A → Set)
-  (contains : {A : Set} (s : ℘ A) (a : A) → (a ∈ s) ⨄ (a ∉ s)) where
+  (contains : {A : Set} (s : ℘ A) (a : A) → (a ∈ s) ⨄ (a ∉ s)) 
+  (contains-consistency : {A : Set} {s : ℘ A} {a : A} → a ∈ s → a ∉ s → ⊥) where
 
   -- In CCS an action might be:
   --  - a communication over a certain channel α, γ, etc..
@@ -264,10 +268,6 @@ module TraceEquivalence
   ... | left  a∈l = ε
   ... | right a∉l = (↑ a) ∷ (restriction w l)
 
-  lemma-restriction : {a : Channel} {w : Trace} {l : ℘ Channel} → a ∉ l → restriction (↑ a ∷ w) l ≡ (↑ a ∷ restriction w l)
-  lemma-restriction {a} {w} {l} a∉l with contains l a
-  ... | right a∉l = refl
-
   ←-trace-res : {t : Trace} {p : Proc} {l : ℘ Channel} → t ∈Tr p → (restriction t l) ∈Tr (p ∖ l)
   ←-trace-res {ε} t∈p = ε-trace
   ←-trace-res {τ ∷ w} {p} {l} (∷-trace step w∈p₁) = ∷-trace (step-res-τ step) (←-trace-res w∈p₁)
@@ -275,12 +275,17 @@ module TraceEquivalence
   ... | left  a∈l = ε-trace
   ... | right a∉l = ∷-trace (step-res a∉l step) (←-trace-res w∈p₁)
 
+  lemma-restriction : {a : Channel} {w : Trace} {l : ℘ Channel} → a ∉ l → restriction (↑ a ∷ w) l ≡ (↑ a ∷ restriction w l)
+  lemma-restriction {a} {w} {l} a∉l with contains l a
+  ... | right a∉l = refl
+  ... | left  a∈l = false-implication (contains-consistency a∈l a∉l)
+
   →-trace-res : {s : Trace} {l : ℘ Channel} {p : Proc} → s ∈Tr (p ∖ l) → ∃[ t ] ((t ∈Tr p) × ((restriction t l) ≡ s))
   →-trace-res ε-trace = ⟨ ε , [ ε-trace , refl ] ⟩
   →-trace-res {τ ∷ w} (∷-trace (step-res-τ step) wpl) with →-trace-res wpl
   ... | ⟨ s₁ , [ s∈p₁ , refl ] ⟩ = ⟨ τ ∷ s₁ , [ ∷-trace step s∈p₁ , refl ] ⟩
-  →-trace-res {(↑ a) ∷ w} {l} (∷-trace (step-res _ step) wpl) with →-trace-res wpl | contains l a
-  ... | ⟨ s₁ , [ s∈p₁ , refl ] ⟩ | right a∉l = ⟨ (↑ a) ∷ s₁ , [ ∷-trace step s∈p₁ , lemma-restriction a∉l ] ⟩ -- refl
+  →-trace-res {(↑ a) ∷ w} {l} (∷-trace (step-res a∉l step) wpl) with →-trace-res wpl
+  ... | ⟨ s₁ , [ s∈p₁ , refl ] ⟩ = ⟨ (↑ a) ∷ s₁ , [ ∷-trace step s∈p₁ , lemma-restriction a∉l ] ⟩ -- refl
 
   ⇒-res : {p q : Proc} {l : ℘ Channel} → p ⊆Tr q → (p ∖ l) ⊆Tr (q ∖ l)
   ⇒-res pq tpl with →-trace-res tpl 
